@@ -14,22 +14,35 @@ class MapPage extends StatefulWidget {
 
 class _MapPageState extends State<MapPage> {
   GoogleMapController? _controller;
-  l.Location _location = l.Location();
+  final __controller = TextEditingController();
+  final l.Location _location = l.Location();
   Marker? _currentMarker;
   final _searchService = SearchService();
   final _apiService = ApiService();
   final _mapService = MapService();
   bool _serviceEnabled = false;
   l.PermissionStatus _permissionGranted = l.PermissionStatus.denied;
-  late l.LocationData _locationData = l.LocationData.fromMap({'latitude': 37, 'longitude':127});
-
+  l.LocationData _locationData = l.LocationData.fromMap({'latitude': 37.1234, 'longitude':127.1234});
   final Set<Polyline> _polylines = {};
   final Set<Marker> _markers = {};  // Add this line
+
+  List<p.PlacesSearchResult> _placesResult = [];
 
   @override
   void initState() {
     super.initState();
     _getLocation();
+    __controller.addListener(_onSearchChanged);
+  }
+
+  Future<void> _onSearchChanged() async {
+    if(__controller.text.isEmpty){
+      setState((){
+        _placesResult = [];
+      });
+      return;
+    }
+    _placesResult = await _searchService.searchPlaces(__controller.text);
   }
 
   _getLocation() async {
@@ -52,7 +65,7 @@ class _MapPageState extends State<MapPage> {
     _locationData = await _location.getLocation();
     final initialCameraPosition = CameraPosition(
       target: LatLng(_locationData.latitude!, _locationData.longitude!),
-      zoom: 12.0,
+      zoom: 18.0,
     );
 
     setState(() {
@@ -66,38 +79,51 @@ class _MapPageState extends State<MapPage> {
       appBar: AppBar(
         title: const Text('Google Maps'),
       ),
-      body: GoogleMap(
-        onMapCreated: (controller) {
-          _controller = controller;
-        },
-        initialCameraPosition: const CameraPosition(
-          target: LatLng(37.5665, 126.9780),  // Default location
-          zoom: 12.0,
-        ),
-        polylines: _polylines,
-        markers: _markers,  // Add this line
+      body: Column(
+        children: <Widget>[
+          TextField(
+            controller: __controller,
+            decoration: InputDecoration(
+              labelText: 'Search',
+              prefixIcon: Icon(Icons.search),
+            ),
+          ),
+          Flexible(
+            child: GoogleMap(
+              onMapCreated: (controller) {
+                _controller = controller;
+              },
+              initialCameraPosition: CameraPosition(
+                target: LatLng(_locationData.latitude!, _locationData.longitude!),
+                zoom: 18.0,
+              ),
+              polylines: _polylines,
+              markers: _markers,  // Add this line
+            ),
+          ),
+        ],
       ),
       floatingActionButton: FloatingActionButton(
         child: const Icon(Icons.search),
         onPressed: () async {
-          // Search for a location
-          List<p.PlacesSearchResult> results = await _searchService.searchPlaces('아주대학교 병원');
+          // // Search for a location
+          // List<p.PlacesSearchResult> results = await _searchService.searchPlaces('아주대학교 병원');
 
-          if (results.isNotEmpty) {
+          if (_placesResult.isNotEmpty) {
             // Get the first result
-            p.PlacesSearchResult place = results.first;
+            p.PlacesSearchResult place = _placesResult.first;
 
             // Create a LatLng object
             LatLng destination = LatLng(place.geometry!.location.lat, place.geometry!.location.lng);
-
+            // _apiservice 로 _locationData.lat, lng 보내고, place.lat, lng 보내면 됨
             // Move the camera to the destination
-            _controller!.moveCamera(CameraUpdate.newLatLng(LatLng(37.372438, 127.107332)));//destination 들어가있엇어
+            _controller!.moveCamera(CameraUpdate.newLatLng(destination));//destination 들어가있엇어
 
             // Create a marker
             Marker marker = Marker(
               markerId: MarkerId(place.placeId),
               // position: destination,
-              position: LatLng(37.372438, 127.107332),
+              position: destination,
               infoWindow: InfoWindow(title: place.name),
             );
 
@@ -107,7 +133,7 @@ class _MapPageState extends State<MapPage> {
 
               // _polylines.add(await _mapService.drawRoute(routePoints));
               _polylines.add(await _mapService.drawRoute([
-              const LatLng(37.372438, 127.107332), LatLng(37.372443, 127.107688), LatLng(37.372446, 127.107786),LatLng(37.37244, 127.108183), LatLng(37.372411, 127.108379),
+              destination, LatLng(37.372443, 127.107688), LatLng(37.372446, 127.107786),LatLng(37.37244, 127.108183), LatLng(37.372411, 127.108379),
               LatLng(37.37261, 127.108536),
               LatLng(37.373226, 127.109295),
               LatLng(37.37346, 127.109625),
