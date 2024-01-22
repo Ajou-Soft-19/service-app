@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:location/location.dart' as l;
@@ -14,9 +16,7 @@ class MapPage extends StatefulWidget {
 
 class _MapPageState extends State<MapPage> {
   GoogleMapController? _controller;
-  final __controller = TextEditingController();
   final l.Location _location = l.Location();
-  Marker? _currentMarker;
   final _searchService = SearchService();
   final _apiService = ApiService();
   final _mapService = MapService();
@@ -26,26 +26,14 @@ class _MapPageState extends State<MapPage> {
   final Set<Polyline> _polylines = {};
   final Set<Marker> _markers = {};  // Add this line
   List<p.PlacesSearchResult> _placesResult = [];
+  StreamSubscription<l.LocationData>? _locationSubscription;
 
   @override
   void initState() {
     super.initState();
     _getLocation();
-    // __controller.addListener(_onSearchChanged);
   }
 
-  // Future<void> _onSearchChanged() async {
-  //   if(__controller.text.isEmpty){
-  //     setState((){
-  //       _placesResult = [];
-  //     });
-  //     return;
-  //   }
-  //   setState(() async {
-  //     _placesResult = await _searchService.searchPlaces(__controller.text);
-  //
-  //   });
-  // }
 
   _getLocation() async {
     _serviceEnabled = await _location.serviceEnabled();
@@ -75,11 +63,69 @@ class _MapPageState extends State<MapPage> {
     });
   }
 
+  void _startNavigation() {
+    _locationSubscription?.cancel();  // Cancel any previous subscription
+
+    _locationSubscription = _location.onLocationChanged.listen((l.LocationData currentLocation) {
+      setState(() {
+        _locationData = currentLocation;
+
+        // Update the user's marker to reflect the new location
+        _updateUserMarker();
+
+        _moveCameraToCurrentLocation();
+      });
+
+      // TODO: Send location data to the server
+    });
+  }
+  void _updateUserMarker() async{
+    final BitmapDescriptor customIcon = await BitmapDescriptor.fromAssetImage(
+      ImageConfiguration(devicePixelRatio: 0.5),
+      'assets/navigation.png',
+    );
+
+    Marker userMarker = Marker(
+      markerId: MarkerId('user'),
+      position: LatLng(_locationData.latitude!, _locationData.longitude!),
+      rotation: _locationData.heading!,  // The rotation is the direction of travel
+      icon: customIcon,
+    );
+    setState(() {
+      _markers.removeWhere((marker) => marker.markerId.value == 'user');
+      _markers.add(userMarker);
+    });
+  }
+
+  void _moveCameraToCurrentLocation() {
+    _controller!.animateCamera(
+      CameraUpdate.newCameraPosition(
+        CameraPosition(
+          target: LatLng(_locationData.latitude!, _locationData.longitude!),
+          zoom: 30.0,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Google Maps'),
+        title: const Text('Ajou\'s Miracle'),
+        actions: <Widget>[
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: Center(
+              child: Text(
+                '${_locationData.speed?.toStringAsFixed(2)} m/s',
+                style: const TextStyle(fontSize: 20.0),
+              ),
+            ),
+          ),
+          IconButton(onPressed: _startNavigation, icon: Icon(Icons.navigation)),
+          IconButton(onPressed: _moveCameraToCurrentLocation, icon: Icon(Icons.my_location))
+        ],
       ),
       body: Column(
         children: <Widget>[
@@ -100,16 +146,9 @@ class _MapPageState extends State<MapPage> {
                 _controller!.moveCamera(CameraUpdate.newLatLng(destination));
               });
 
-              Polyline route = await _mapService.drawRoute([
-                LatLng(_locationData.latitude!,_locationData.longitude!), destination, LatLng(37.372443, 127.107688), LatLng(37.372446, 127.107786),LatLng(37.37244, 127.108183), LatLng(37.372411, 127.108379),
-                LatLng(37.37261, 127.108536),
-                LatLng(37.373226, 127.109295),
-                LatLng(37.37346, 127.109625),
-                LatLng(37.373574, 127.109787),
-                LatLng(37.373725, 127.110002),
-                LatLng(37.373845, 127.110165),
-                LatLng(37.374508, 127.111075),
-              ]);
+              List<LatLng> routePoints = await _apiService.sendCoordinates(_locationData.longitude!, _locationData.latitude!, destination.longitude, destination.latitude);
+              Polyline route = await _mapService.drawRoute(routePoints);
+
               setState(() {
                 _polylines.add(route);
               });
