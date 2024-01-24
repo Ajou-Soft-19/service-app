@@ -32,14 +32,13 @@ class _MapPageState extends State<MapPage> {
   StreamSubscription<l.LocationData>? _locationSubscription;
   bool _isUsingNavi = false;
   final socketService = SocketService("ws://35.216.118.43:7002/ws/my-location",
-      'Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJrbWtra3BAbmF2ZXIuY29tIiwiYXV0aCI6IlJPTEVfQURNSU4sUk9MRV9FTUVSR0VOQ1lfVkVISUNMRSxST0xFX1VTRVIiLCJ1c2VybmFtZSI6Iuq5gOuvvOq3nCIsInRva2VuSWQiOiJkMmI1MGQ0Zi1lYWRiLTQ2Y2EtOGY3Yy1lOTI5MTVjYmNiZTgiLCJleHAiOjE3MDY0MzMxMTd9.2EdmhIxe18ed1hioLVGNyZ8YZ2VPx-Rq0zMNebuITA04vplo4XgtDwBOqlU2TC7wymoErq6CWCtJwdY5Csax7g'
+      'eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJrbWtra3BAbmF2ZXIuY29tIiwiYXV0aCI6IlJPTEVfQURNSU4sUk9MRV9FTUVSR0VOQ1lfVkVISUNMRSxST0xFX1VTRVIiLCJ1c2VybmFtZSI6Iuq5gOuvvOq3nCIsInRva2VuSWQiOiJkMmI1MGQ0Zi1lYWRiLTQ2Y2EtOGY3Yy1lOTI5MTVjYmNiZTgiLCJleHAiOjE3MDY0MzMxMTd9.2EdmhIxe18ed1hioLVGNyZ8YZ2VPx-Rq0zMNebuITA04vplo4XgtDwBOqlU2TC7wymoErq6CWCtJwdY5Csax7g'
   );
   
   @override
   void initState() {
     super.initState();
     _getLocation();
-
     socketService.initialize(
       'Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJrbWtra3BAbmF2ZXIuY29tIiwiYXV0aCI6IlJPTEVfQURNSU4sUk9MRV9FTUVSR0VOQ1lfVkVISUNMRSxST0xFX1VTRVIiLCJ1c2VybmFtZSI6Iuq5gOuvvOq3nCIsInRva2VuSWQiOiJkMmI1MGQ0Zi1lYWRiLTQ2Y2EtOGY3Yy1lOTI5MTVjYmNiZTgiLCJleHAiOjE3MDY0MzMxMTd9.2EdmhIxe18ed1hioLVGNyZ8YZ2VPx-Rq0zMNebuITA04vplo4XgtDwBOqlU2TC7wymoErq6CWCtJwdY5Csax7g',
       1, //vehicleID
