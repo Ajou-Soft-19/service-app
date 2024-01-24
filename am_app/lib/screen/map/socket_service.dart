@@ -21,7 +21,7 @@ class SocketService {
     _channel = IOWebSocketChannel(socket);
   }
 
-  void initialize(String jwt, int vehicleId) {
+  void initialize(int vehicleId) {
     _vehicleId = vehicleId;
 
     final initMessage = {

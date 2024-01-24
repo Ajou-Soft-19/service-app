@@ -49,7 +49,6 @@ class _MapPageState extends State<MapPage> {
   _initSocket() async {
     await socketService.connect("ws://35.216.118.43:7002/ws/my-location", _jwt);
     socketService.initialize(
-      'Bearer $_jwt',
       1, //vehicleID
     );
   }
