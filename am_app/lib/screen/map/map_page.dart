@@ -31,22 +31,27 @@ class _MapPageState extends State<MapPage> {
   List<p.PlacesSearchResult> _placesResult = [];
   StreamSubscription<l.LocationData>? _locationSubscription;
   bool _isUsingNavi = false;
-  final socketService = SocketService("ws://35.216.118.43:7002/ws/my-location",
-      'eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJrbWtra3BAbmF2ZXIuY29tIiwiYXV0aCI6IlJPTEVfQURNSU4sUk9MRV9FTUVSR0VOQ1lfVkVISUNMRSxST0xFX1VTRVIiLCJ1c2VybmFtZSI6Iuq5gOuvvOq3nCIsInRva2VuSWQiOiJkMmI1MGQ0Zi1lYWRiLTQ2Y2EtOGY3Yy1lOTI5MTVjYmNiZTgiLCJleHAiOjE3MDY0MzMxMTd9.2EdmhIxe18ed1hioLVGNyZ8YZ2VPx-Rq0zMNebuITA04vplo4XgtDwBOqlU2TC7wymoErq6CWCtJwdY5Csax7g'
-  );
-  
+
+  final _jwt =
+      'eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJrbWtra3BAbmF2ZXIuY29tIiwiYXV0aCI6IlJPTEVfQURNSU4sUk9MRV9FTUVSR0VOQ1lfVkVISUNMRSxST0xFX1VTRVIiLCJ1c2VybmFtZSI6Iuq5gOuvvOq3nCIsInRva2VuSWQiOiJkMmI1MGQ0Zi1lYWRiLTQ2Y2EtOGY3Yy1lOTI5MTVjYmNiZTgiLCJleHAiOjE3MDY0MzMxMTd9.2EdmhIxe18ed1hioLVGNyZ8YZ2VPx-Rq0zMNebuITA04vplo4XgtDwBOqlU2TC7wymoErq6CWCtJwdY5Csax7g';
+  final socketService = SocketService();
+
   @override
   void initState() {
     super.initState();
+    _initSocket();
     _getLocation();
-    socketService.initialize(
-      'Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJrbWtra3BAbmF2ZXIuY29tIiwiYXV0aCI6IlJPTEVfQURNSU4sUk9MRV9FTUVSR0VOQ1lfVkVISUNMRSxST0xFX1VTRVIiLCJ1c2VybmFtZSI6Iuq5gOuvvOq3nCIsInRva2VuSWQiOiJkMmI1MGQ0Zi1lYWRiLTQ2Y2EtOGY3Yy1lOTI5MTVjYmNiZTgiLCJleHAiOjE3MDY0MzMxMTd9.2EdmhIxe18ed1hioLVGNyZ8YZ2VPx-Rq0zMNebuITA04vplo4XgtDwBOqlU2TC7wymoErq6CWCtJwdY5Csax7g',
-      1, //vehicleID
-    );
     //
     // socketService.emergencyVehicleUpdates.listen((data){
     //   print('Emergency vehicle data: $data');
     // });
+  }
+
+  _initSocket() async {
+    await socketService.connect("ws://35.216.118.43:7002/ws/my-location", _jwt);
+    socketService.initialize(
+      1, //vehicleID
+    );
   }
 
   _getLocation() async {
@@ -104,12 +109,12 @@ class _MapPageState extends State<MapPage> {
 
   void _updateUserMarker() async {
     final BitmapDescriptor customIcon = await BitmapDescriptor.fromAssetImage(
-      ImageConfiguration(devicePixelRatio: 0.5),
+      const ImageConfiguration(devicePixelRatio: 0.5),
       'assets/navigation.png',
     );
 
     Marker userMarker = Marker(
-      markerId: MarkerId('user'),
+      markerId: const MarkerId('user'),
       position: LatLng(_locationData.latitude!, _locationData.longitude!),
       rotation: _locationData.heading!,
       // The rotation is the direction of travel
@@ -163,7 +168,7 @@ class _MapPageState extends State<MapPage> {
               icon: Icon(_isUsingNavi ? Icons.stop : Icons.navigation)),
           IconButton(
               onPressed: _moveCameraToCurrentLocation,
-              icon: Icon(Icons.my_location))
+              icon: const Icon(Icons.my_location))
         ],
       ),
       body: Column(

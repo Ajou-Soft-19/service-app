@@ -12,23 +12,23 @@ class SocketService {
   late String? _jwt;
   late int? _vehicleId;
 
-  SocketService(String url, String jwt) {
-    WebSocket.connect(url, headers: {
+  Future<void> connect(String url, String jwt) async {
+    _jwt = jwt;
+    final socket = await WebSocket.connect(url, headers: {
       'Authorization': 'Bearer $jwt',
-    }).then((socket) {
-      _channel = IOWebSocketChannel(socket);
     });
+
+    _channel = IOWebSocketChannel(socket);
   }
 
-  void initialize(String jwt, int vehicleId) {
-    _jwt = jwt;
+  void initialize(int vehicleId) {
     _vehicleId = vehicleId;
 
     final initMessage = {
       'requestType': 'INIT',
-      'jwt': jwt,
+      'jwt': 'Bearer $_jwt',
       'data': {
-        'vehicleId': vehicleId,
+        'vehicleId': _vehicleId,
       },
     };
 
@@ -44,7 +44,7 @@ class SocketService {
   void startSendingLocationData(LocationData locationData, bool isUsingNavi) {
     _locationSubscription?.cancel(); // Cancel any previous subscription
 
-    _locationSubscription = Stream.periodic(Duration(seconds: 10))
+    _locationSubscription = Stream.periodic(const Duration(seconds: 10))
         .asyncMap((_) => Future.value(locationData))
         .listen((LocationData currentLocation) {
       final data = {
