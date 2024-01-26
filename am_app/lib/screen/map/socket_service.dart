@@ -1,18 +1,20 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:web_socket_channel/io.dart';
 import 'package:location/location.dart';
 
 class SocketService {
   late IOWebSocketChannel _channel;
   final Location _location = Location();
+  final url = "${dotenv.env['SOCKET_SERVER_URL']}/ws/my-location";
   StreamSubscription<LocationData>? _locationSubscription;
 
   late String? _jwt;
   late int? _vehicleId;
 
-  Future<void> connect(String url, String jwt) async {
+  Future<void> connect(String jwt) async {
     _jwt = jwt;
     final socket = await WebSocket.connect(url, headers: {
       'Authorization': 'Bearer $jwt',
