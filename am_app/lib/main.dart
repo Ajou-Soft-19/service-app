@@ -1,21 +1,40 @@
+import 'package:am_app/model/provider/user_provider.dart';
+import 'package:am_app/model/provider/vehicle_provider.dart';
+import 'package:am_app/screen/main_page/main_page.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:provider/provider.dart';
 import 'screen/map/map_page.dart';
 
-void main() {
-  runApp(const MyApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load();
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (context) => UserProvider()),
+        ChangeNotifierProvider(create: (context) => VehicleProvider())
+      ],
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Moses\' Miracle',
-      initialRoute: '/',
+      theme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: const Color.fromARGB(255, 17, 0, 255),
+        ),
+        useMaterial3: true,
+      ),
       routes: {
-        '/': (context) => const MapPage(),
+        '/': (context) => const MainPage(),
       },
     );
   }

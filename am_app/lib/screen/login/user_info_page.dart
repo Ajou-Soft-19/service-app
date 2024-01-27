@@ -1,0 +1,176 @@
+import 'package:am_app/model/api/login_api.dart';
+import 'package:am_app/model/provider/user_provider.dart';
+import 'package:am_app/model/provider/vehicle_provider.dart';
+import 'package:am_app/screen/login/edit_user_info_page.dart';
+import 'package:am_app/screen/vehicle/vehicle_list_page.dart';
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+class UserInfoPage extends StatefulWidget {
+  const UserInfoPage({Key? key}) : super(key: key);
+
+  @override
+  State<UserInfoPage> createState() => _UserInfoPageState();
+}
+
+class _UserInfoPageState extends State<UserInfoPage> {
+  String username = '';
+  String email = '';
+  String userProfileImgUrl = 'assets/placeholder.png';
+  bool hasProfileImage = false;
+
+  @override
+  void initState() {
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    super.initState();
+    username =
+        userProvider.username != null ? userProvider.username! : username;
+    email = userProvider.email != null ? userProvider.email! : email;
+    if (userProvider.profileImageUrl != null) {
+      userProfileImgUrl = userProvider.profileImageUrl!;
+      hasProfileImage = true;
+    }
+  }
+
+  void onLogoutPressed(UserProvider userProvider) async {
+    try {
+      LoginApi().logout();
+    } catch (e) {}
+    userProvider.deleteState(false);
+  }
+
+  void onEditInfoPressed(UserProvider userProvider) async {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => EditUserInfoPage(userProvider)),
+    );
+  }
+
+  void onVehiclePressed(VehicleProvider vehicleProvider) async {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const VehicleListPage()),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final userProvider = Provider.of<UserProvider>(context);
+    final vehicleProvider = Provider.of<VehicleProvider>(context);
+
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: Center(
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                buildProfileImage(),
+                const SizedBox(height: 10),
+                Text(
+                  'Hello, $username',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                      fontSize: 24, fontWeight: FontWeight.bold),
+                ),
+                vehicleProvider.licenseNumber != null
+                    ? Text(
+                        'vechicle license: ${vehicleProvider.licenseNumber}',
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                            fontSize: 24, fontWeight: FontWeight.bold),
+                      )
+                    : const Text(
+                        'Select your vechicle',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                            fontSize: 24, fontWeight: FontWeight.bold),
+                      ),
+                const SizedBox(height: 10),
+                Text(
+                  email,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+                ),
+                const SizedBox(height: 20),
+                _buildUserActions(userProvider, vehicleProvider),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  ClipOval buildProfileImage() {
+    return ClipOval(
+      child: hasProfileImage
+          ? Image.network(
+              userProfileImgUrl,
+              fit: BoxFit.cover,
+              width: 100,
+              height: 100,
+            )
+          : Image.asset(
+              userProfileImgUrl,
+              fit: BoxFit.cover,
+              width: 100,
+              height: 100,
+            ),
+    );
+  }
+
+  Widget _buildUserActions(
+      UserProvider userProvider, VehicleProvider vehicleProvider) {
+    return Column(
+      children: [
+        const SizedBox(height: 20),
+        _buildActionButton(
+          onPressed: () => onVehiclePressed(vehicleProvider),
+          backgroundColor: Colors.indigo,
+          text: '차량 조회 및 등록',
+        ),
+        const SizedBox(height: 10),
+        _buildActionButton(
+          onPressed: () => onEditInfoPressed(userProvider),
+          backgroundColor: Colors.blue,
+          text: '닉네임 수정',
+        ),
+        const SizedBox(height: 10),
+        _buildActionButton(
+          onPressed: () => onLogoutPressed(userProvider),
+          backgroundColor: Colors.red[500]!,
+          text: '로그아웃',
+        ),
+      ],
+    );
+  }
+
+  Widget _buildActionButton({
+    required Function() onPressed,
+    required Color backgroundColor,
+    required String text,
+  }) {
+    return Material(
+      elevation: 5.0,
+      borderRadius: BorderRadius.circular(30.0),
+      color: backgroundColor,
+      child: MaterialButton(
+        minWidth: MediaQuery.of(context).size.width * 0.8,
+        padding: const EdgeInsets.fromLTRB(30.0, 15.0, 30.0, 15.0),
+        onPressed: onPressed,
+        child: Text(
+          text,
+          textAlign: TextAlign.center,
+          style: const TextStyle(
+            fontSize: 20,
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
+    );
+  }
+}

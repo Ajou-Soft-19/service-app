@@ -1,12 +1,15 @@
 import 'dart:async';
 
+import 'package:am_app/model/provider/user_provider.dart';
+import 'package:am_app/model/provider/vehicle_provider.dart';
 import 'package:am_app/screen/map/socket_service.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:location/location.dart' as l;
 import 'package:google_maps_webservice/places.dart' as p;
+import 'package:provider/provider.dart';
 import 'search_service.dart';
-import 'api_service.dart';
+import '../../model/api/api_service.dart';
 import 'map_service.dart';
 
 class MapPage extends StatefulWidget {
@@ -16,7 +19,7 @@ class MapPage extends StatefulWidget {
   _MapPageState createState() => _MapPageState();
 }
 
-class _MapPageState extends State<MapPage> {
+class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
   GoogleMapController? _controller;
   final l.Location _location = l.Location();
   final _searchService = SearchService();
@@ -32,26 +35,48 @@ class _MapPageState extends State<MapPage> {
   StreamSubscription<l.LocationData>? _locationSubscription;
   bool _isUsingNavi = false;
 
-  final _jwt =
-      'eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJrbWtra3BAbmF2ZXIuY29tIiwiYXV0aCI6IlJPTEVfQURNSU4sUk9MRV9FTUVSR0VOQ1lfVkVISUNMRSxST0xFX1VTRVIiLCJ1c2VybmFtZSI6Iuq5gOuvvOq3nCIsInRva2VuSWQiOiJkMmI1MGQ0Zi1lYWRiLTQ2Y2EtOGY3Yy1lOTI5MTVjYmNiZTgiLCJleHAiOjE3MDY0MzMxMTd9.2EdmhIxe18ed1hioLVGNyZ8YZ2VPx-Rq0zMNebuITA04vplo4XgtDwBOqlU2TC7wymoErq6CWCtJwdY5Csax7g';
   final socketService = SocketService();
 
   @override
   void initState() {
     super.initState();
-    _initSocket();
     _getLocation();
-    //
+    _initSocketListener();
+  }
+
+  void _initSocketListener() {
+    final vehicleProvider =
+        Provider.of<VehicleProvider>(context, listen: false);
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    _initSocket(userProvider, vehicleProvider);
+    vehicleProvider.addListener(() {
+      _initSocket(userProvider, vehicleProvider);
+    });
+  }
+
+  @override
+  void dispose() {
+    socketService.close();
+    super.dispose();
+  }
+
+  _initSocket(userProvider, vehicleProvider) async {
+    if (socketService.isConnected) {
+      socketService.close();
+    }
+
+    if (vehicleProvider.vehicleId == null || userProvider.accessToken == null) {
+      return;
+    }
+
+    await socketService.connect(userProvider.accessToken);
+    socketService.initialize(
+      int.parse(vehicleProvider.vehicleId!),
+    );
+
     // socketService.emergencyVehicleUpdates.listen((data){
     //   print('Emergency vehicle data: $data');
     // });
-  }
-
-  _initSocket() async {
-    await socketService.connect("ws://35.216.118.43:7002/ws/my-location", _jwt);
-    socketService.initialize(
-      1, //vehicleID
-    );
   }
 
   _getLocation() async {
@@ -141,6 +166,8 @@ class _MapPageState extends State<MapPage> {
 
   @override
   Widget build(BuildContext context) {
+    VehicleProvider vehicleProvider = Provider.of<VehicleProvider>(context);
+    UserProvider userProvider = Provider.of<UserProvider>(context);
     return Scaffold(
       appBar: AppBar(
         title: const Text('Ajou\'s Miracle'),
@@ -195,7 +222,9 @@ class _MapPageState extends State<MapPage> {
                   _locationData.longitude!,
                   _locationData.latitude!,
                   destination.longitude,
-                  destination.latitude);
+                  destination.latitude,
+                  int.parse(vehicleProvider.vehicleId!),
+                  userProvider);
               Polyline route = await _mapService.drawRoute(routePoints);
 
               setState(() {
@@ -246,4 +275,8 @@ class _MapPageState extends State<MapPage> {
       ),
     );
   }
+
+  @override
+  // TODO: implement wantKeepAlive
+  bool get wantKeepAlive => true;
 }
