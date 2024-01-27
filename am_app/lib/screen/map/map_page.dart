@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:am_app/model/provider/user_provider.dart';
 import 'package:am_app/model/provider/vehicle_provider.dart';
+import 'package:am_app/screen/asset/assets.dart';
 import 'package:am_app/screen/map/socket_service.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -217,14 +218,18 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
                 _markers.add(marker);
                 _controller!.moveCamera(CameraUpdate.newLatLng(destination));
               });
-
-              List<LatLng> routePoints = await _apiService.sendCoordinates(
-                  _locationData.longitude!,
-                  _locationData.latitude!,
-                  destination.longitude,
-                  destination.latitude,
-                  int.parse(vehicleProvider.vehicleId!),
-                  userProvider);
+              List<LatLng> routePoints = [];
+              try {
+                routePoints = await _apiService.sendCoordinates(
+                    _locationData.longitude!,
+                    _locationData.latitude!,
+                    destination.longitude,
+                    destination.latitude,
+                    int.parse(vehicleProvider.vehicleId!),
+                    userProvider);
+              } catch (e) {
+                Assets().showErrorSnackBar(context, e.toString());
+              }
               Polyline route = await _mapService.drawRoute(routePoints);
 
               setState(() {
