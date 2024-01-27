@@ -1,4 +1,5 @@
 import 'package:am_app/model/provider/user_provider.dart';
+import 'package:am_app/model/provider/vehicle_provider.dart';
 import 'package:am_app/screen/main_page/main_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -12,6 +13,7 @@ void main() async {
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (context) => UserProvider()),
+        ChangeNotifierProvider(create: (context) => VehicleProvider())
       ],
       child: const MyApp(),
     ),

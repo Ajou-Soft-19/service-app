@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:am_app/model/api/exception/exception_message.dart';
 import 'package:am_app/model/api/exception/token_expired.dart';
 import 'package:am_app/model/provider/user_provider.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
@@ -94,12 +95,11 @@ class TokenApiUtils {
 
   Future<void> isResponseSuccess(http.Response response) async {
     if (response.statusCode == 500) {
-      throw Exception(response.body);
+      throw Exception('Server error');
     }
 
     if (response.statusCode != 200) {
       final json = jsonDecode(utf8.decode(response.bodyBytes));
-      print(json);
       throw Exception(json['data']['errMsg']);
     }
   }

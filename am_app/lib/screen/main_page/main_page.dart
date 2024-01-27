@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:am_app/model/provider/user_provider.dart';
+import 'package:am_app/model/provider/vehicle_provider.dart';
 import 'package:am_app/screen/asset/assets.dart';
 import 'package:am_app/screen/main_page/tab_page.dart';
 import 'package:flutter/material.dart';
@@ -22,8 +23,22 @@ class MainPageState extends State<MainPage> {
   void initState() {
     super.initState();
     checkGPSPermission(context);
+    initProvider();
+  }
+
+  void initProvider() {
     final userProvider = Provider.of<UserProvider>(context, listen: false);
+    final vehicleProvider =
+        Provider.of<VehicleProvider>(context, listen: false);
     userProvider.initState();
+    vehicleProvider.initState();
+    userProvider.addListener(() {
+      if (userProvider.accessToken == null) {
+        final vehicleProvider =
+            Provider.of<VehicleProvider>(context, listen: false);
+        vehicleProvider.deleteState();
+      }
+    });
   }
 
   @override

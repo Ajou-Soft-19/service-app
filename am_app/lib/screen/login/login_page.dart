@@ -36,7 +36,7 @@ class _LoginPageState extends State<LoginPage> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
               const Icon(
-                Icons.alarm_add,
+                Icons.assistant_navigation,
                 size: 80,
                 color: Colors.blue,
               ),

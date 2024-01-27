@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:am_app/model/provider/user_provider.dart';
+import 'package:am_app/model/provider/vehicle_provider.dart';
 import 'package:am_app/screen/map/socket_service.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -8,7 +9,7 @@ import 'package:location/location.dart' as l;
 import 'package:google_maps_webservice/places.dart' as p;
 import 'package:provider/provider.dart';
 import 'search_service.dart';
-import 'api_service.dart';
+import '../../model/api/api_service.dart';
 import 'map_service.dart';
 
 class MapPage extends StatefulWidget {
@@ -38,13 +39,18 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
   @override
   void initState() {
     super.initState();
-    final userProvider = Provider.of<UserProvider>(context, listen: false);
-    _initSocket(userProvider);
     _getLocation();
+    _initSocketListener();
+  }
 
-    // socketService.emergencyVehicleUpdates.listen((data){
-    //   print('Emergency vehicle data: $data');
-    // });
+  void _initSocketListener() {
+    final vehicleProvider =
+        Provider.of<VehicleProvider>(context, listen: false);
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    _initSocket(userProvider, vehicleProvider);
+    vehicleProvider.addListener(() {
+      _initSocket(userProvider, vehicleProvider);
+    });
   }
 
   @override
@@ -53,11 +59,23 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
     super.dispose();
   }
 
-  _initSocket(userProvider) async {
+  _initSocket(userProvider, vehicleProvider) async {
+    if (socketService.isConnected) {
+      socketService.close();
+    }
+
+    if (vehicleProvider.vehicleId == null || userProvider.accessToken == null) {
+      return;
+    }
+
     await socketService.connect(userProvider.accessToken);
     socketService.initialize(
-      2,
+      int.parse(vehicleProvider.vehicleId!),
     );
+
+    // socketService.emergencyVehicleUpdates.listen((data){
+    //   print('Emergency vehicle data: $data');
+    // });
   }
 
   _getLocation() async {
@@ -147,6 +165,8 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
 
   @override
   Widget build(BuildContext context) {
+    VehicleProvider vehicleProvider = Provider.of<VehicleProvider>(context);
+    UserProvider userProvider = Provider.of<UserProvider>(context);
     return Scaffold(
       appBar: AppBar(
         title: const Text('Ajou\'s Miracle'),
@@ -201,7 +221,9 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
                   _locationData.longitude!,
                   _locationData.latitude!,
                   destination.longitude,
-                  destination.latitude);
+                  destination.latitude,
+                  int.parse(vehicleProvider.vehicleId!),
+                  userProvider);
               Polyline route = await _mapService.drawRoute(routePoints);
 
               setState(() {

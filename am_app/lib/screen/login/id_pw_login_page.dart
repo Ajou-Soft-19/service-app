@@ -31,6 +31,8 @@ class _IdPwLoginPageState extends State<IdPwLoginPage> {
       _isLoading = true;
     });
 
+    FocusScope.of(context).unfocus();
+
     try {
       final tokenInfo = await _loginApi.idpwLogin(_email, _password);
       Map<String, dynamic> accessTokenInfo =

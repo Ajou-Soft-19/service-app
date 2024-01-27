@@ -66,7 +66,7 @@ class _TabPageState extends State<TabPage> with SingleTickerProviderStateMixin {
           ],
         ),
         child: Container(
-          height: kToolbarHeight + 10,
+          height: kToolbarHeight + 20,
           decoration: BoxDecoration(
             color: Colors.grey.shade200,
             borderRadius: BorderRadius.circular(8.0),

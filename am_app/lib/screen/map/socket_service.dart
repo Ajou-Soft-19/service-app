@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:web_socket_channel/io.dart';
 import 'package:location/location.dart';
@@ -13,14 +14,20 @@ class SocketService {
 
   late String? _jwt;
   late int? _vehicleId;
+  bool _isConnected = false;
 
   Future<void> connect(String jwt) async {
     _jwt = jwt;
-    final socket = await WebSocket.connect(url, headers: {
-      'Authorization': 'Bearer $jwt',
-    });
+    try {
+      final socket = await WebSocket.connect(url, headers: {
+        'Authorization': 'Bearer $jwt',
+      });
 
-    _channel = IOWebSocketChannel(socket);
+      _channel = IOWebSocketChannel(socket);
+      _isConnected = true;
+    } catch (e) {
+      debugPrint('Error connecting to socket: $e');
+    }
   }
 
   void initialize(int vehicleId) {
@@ -37,9 +44,9 @@ class SocketService {
     _channel.sink.add(jsonEncode(initMessage));
 
     _channel.stream.listen((message) {
-      print('Received: $message');
+      debugPrint('Received: $message');
     }, onError: (error) {
-      print('Error: $error');
+      debugPrint('Error: $error');
     });
   }
 
@@ -61,7 +68,7 @@ class SocketService {
           'timestamp': DateTime.now().toIso8601String(),
         },
       };
-      print("Sending data: $data"); // Log the data being sent
+      debugPrint("Sending data: $data"); // Log the data being sent
       _channel.sink.add(jsonEncode(data));
     });
   }
@@ -71,9 +78,14 @@ class SocketService {
   //     _channel.stream.transform(jsonDecoder);
 
   void close() {
+    if (_isConnected == false) return;
+    _isConnected = false;
     _locationSubscription?.cancel();
     _channel.sink.close();
+    debugPrint('Socket closed');
   }
+
+  bool get isConnected => _isConnected;
 }
 //
 // final jsonDecoder = StreamTransformer<String, dynamic>.fromHandlers(

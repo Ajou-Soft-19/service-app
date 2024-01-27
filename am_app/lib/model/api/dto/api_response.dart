@@ -3,7 +3,7 @@ import 'dart:convert';
 class ApiResponse {
   final String httpStatus;
   final int code;
-  final Map<String, dynamic> data;
+  final dynamic data;
 
   ApiResponse(
       {required this.httpStatus, required this.code, required this.data});

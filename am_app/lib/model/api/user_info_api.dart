@@ -35,6 +35,7 @@ class UserInfoApi extends TokenApiUtils {
   }
 
   Future<String> getUserInfo(UserProvider userProvider) async {
+    await checkLoginStatus(userProvider);
     final url = Uri.parse('$loginServerUrl/api/whoami');
     final response = await http
         .get(url, headers: await getHeaders(authRequired: true))
@@ -51,6 +52,7 @@ class UserInfoApi extends TokenApiUtils {
 
   Future<void> editUsername(
       UserProvider userProvider, String newUsername) async {
+    await checkLoginStatus(userProvider);
     final url = Uri.parse('$loginServerUrl/api/account/update-username');
     final response = await http
         .post(
@@ -68,6 +70,7 @@ class UserInfoApi extends TokenApiUtils {
 
   Future<void> editPassword(
       UserProvider userProvider, String oldPassword, String newPassword) async {
+    await checkLoginStatus(userProvider);
     final url = Uri.parse('$loginServerUrl/api/account/update-password');
     final response = await http
         .post(
