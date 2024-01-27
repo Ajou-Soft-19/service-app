@@ -25,8 +25,8 @@ class ApiService extends TokenApiUtils {
       'vehicleId': vehicleId,
     });
 
-    var response =
-        await http.post(url, body: body, headers: await getHeaders());
+    var response = await http.post(url,
+        body: body, headers: await getHeaders(authRequired: true));
     print(response.body.toString());
 
     if (response.statusCode == 200) {
