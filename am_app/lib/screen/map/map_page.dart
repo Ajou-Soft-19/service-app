@@ -1,10 +1,13 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:am_app/model/provider/user_provider.dart';
 import 'package:am_app/model/provider/vehicle_provider.dart';
 import 'package:am_app/screen/asset/assets.dart';
+import 'package:am_app/screen/image_resize.dart';
 import 'package:am_app/screen/map/socket_service.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_compass/flutter_compass.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:location/location.dart' as l;
 import 'package:google_maps_webservice/places.dart' as p;
@@ -35,6 +38,7 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
   List<p.PlacesSearchResult> _placesResult = [];
   StreamSubscription<l.LocationData>? _locationSubscription;
   bool _isUsingNavi = false;
+  double _currentHeading = 0.0;
 
   final socketService = SocketService();
 
@@ -43,6 +47,10 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
     super.initState();
     _getLocation();
     _initSocketListener();
+    FlutterCompass.events?.listen((CompassEvent event) {
+      debugPrint(event.toString());
+      _currentHeading = event.heading!;
+    });
   }
 
   void _initSocketListener() {
@@ -112,12 +120,9 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
   void _startNavigation() {
     _locationSubscription?.cancel(); // Cancel any previous subscription
 
-    _locationSubscription =
-        _location.onLocationChanged.listen((l.LocationData currentLocation) {
+    _locationSubscription = _location.onLocationChanged.listen((l.LocationData currentLocation) {
       setState(() {
         _locationData = currentLocation;
-
-        // Update the user's marker to reflect the new location
         _updateUserMarker();
 
         _moveCameraToCurrentLocation();
@@ -134,16 +139,14 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
   }
 
   void _updateUserMarker() async {
-    final BitmapDescriptor customIcon = await BitmapDescriptor.fromAssetImage(
-      const ImageConfiguration(devicePixelRatio: 0.5),
-      'assets/navigation.png',
-    );
+    BitmapDescriptor customIcon = await getBitmapDescriptorFromAssetBytes('assets/navigation.png', 100);
 
     Marker userMarker = Marker(
       markerId: const MarkerId('user'),
       position: LatLng(_locationData.latitude!, _locationData.longitude!),
-      rotation: _locationData.heading!,
+      // rotation: _locationData.heading!,
       // The rotation is the direction of travel
+      rotation: _currentHeading / 180 * pi,
       icon: customIcon,
     );
     setState(() {
@@ -159,7 +162,8 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
       CameraUpdate.newCameraPosition(
         CameraPosition(
           target: LatLng(_locationData.latitude!, _locationData.longitude!),
-          zoom: 24.0,
+          zoom: 18.0,
+          bearing: _currentHeading,
         ),
       ),
     );
@@ -244,6 +248,7 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
           Flexible(
             child: Stack(children: [
               GoogleMap(
+                compassEnabled: true,
                 onMapCreated: (controller) {
                   _controller = controller;
                 },
