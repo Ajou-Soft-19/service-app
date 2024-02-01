@@ -131,4 +131,19 @@ class UserProvider with ChangeNotifier {
     isLoaded = true;
     notifyListeners();
   }
+
+  Future<bool> hasRole(String roleName) async {
+    if (_role == null) {
+      return false;
+    }
+    return _role!.contains(roleName);
+  }
+
+  Future<bool> hasEmergencyRole() async {
+    return await hasRole('ROLE_EMERGENCY');
+  }
+
+  Future<bool> hasAdminRole() async {
+    return await hasRole('ROLE_ADMIN');
+  }
 }

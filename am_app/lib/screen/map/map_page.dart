@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:am_app/model/api/dto/navigation_path.dart';
 import 'package:am_app/model/provider/user_provider.dart';
 import 'package:am_app/model/provider/vehicle_provider.dart';
 import 'package:am_app/screen/asset/assets.dart';
@@ -10,7 +11,7 @@ import 'package:location/location.dart' as l;
 import 'package:google_maps_webservice/places.dart' as p;
 import 'package:provider/provider.dart';
 import 'search_service.dart';
-import '../../model/api/api_service.dart';
+import '../../model/api/navigation_api.dart';
 import 'map_service.dart';
 
 class MapPage extends StatefulWidget {
@@ -34,6 +35,7 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
   final Set<Marker> _markers = {}; // Add this line
   List<p.PlacesSearchResult> _placesResult = [];
   StreamSubscription<l.LocationData>? _locationSubscription;
+  NavigationData? navigationData;
   bool _isUsingNavi = false;
   final socketService = SocketService();
 
@@ -44,13 +46,13 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
     _initSocketListener();
   }
 
-  void _initSocketListener() {
+  void _initSocketListener() async {
     final vehicleProvider =
         Provider.of<VehicleProvider>(context, listen: false);
     final userProvider = Provider.of<UserProvider>(context, listen: false);
-    _initSocket(userProvider, vehicleProvider);
+    await socketService.initSocket(userProvider, vehicleProvider);
     vehicleProvider.addListener(() {
-      _initSocket(userProvider, vehicleProvider);
+      socketService.initSocket(userProvider, vehicleProvider);
     });
   }
 
@@ -58,25 +60,6 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
   void dispose() {
     socketService.close();
     super.dispose();
-  }
-
-  _initSocket(userProvider, vehicleProvider) async {
-    if (socketService.isConnected) {
-      socketService.close();
-    }
-
-    if (vehicleProvider.vehicleId == null || userProvider.accessToken == null) {
-      return;
-    }
-
-    await socketService.connect(userProvider.accessToken);
-    socketService.initialize(
-      int.parse(vehicleProvider.vehicleId!),
-    );
-
-    // socketService.emergencyVehicleUpdates.listen((data){
-    //   print('Emergency vehicle data: $data');
-    // });
   }
 
   _getLocation() async {
@@ -219,14 +202,16 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
               });
               List<LatLng> routePoints = [];
               try {
-                routePoints = await _apiService.sendCoordinates(
+                navigationData = await _apiService.getNavigationPathNoLogin(
                     _locationData.longitude!,
                     _locationData.latitude!,
                     destination.longitude,
                     destination.latitude,
-                    int.parse(vehicleProvider.vehicleId!),
                     userProvider);
+
+                routePoints = navigationData!.pathPointsToLatLng();
               } catch (e) {
+                debugPrint(e.toString());
                 Assets().showErrorSnackBar(context, e.toString());
               }
               Polyline route = await _mapService.drawRoute(routePoints);
