@@ -92,6 +92,13 @@ class TokenApiUtils {
         null);
   }
 
+  Future<void> checkAdminRole(UserProvider userProvider) async {
+    if (!userProvider.hasAdminRole()) {
+      throw Exception(ExceptionMessage.NO_ADMIN_ROLE);
+    }
+    return;
+  }
+
   Future<void> isResponseSuccess(http.Response response) async {
     if (response.statusCode == 500) {
       throw Exception('Server error');
@@ -99,7 +106,11 @@ class TokenApiUtils {
 
     if (response.statusCode != 200) {
       final json = jsonDecode(utf8.decode(response.bodyBytes));
-      throw Exception(json['data']['errMsg']);
+      if (json['data']['errMsg'] != null) {
+        throw Exception(json['data']['errMsg']);
+      }
+
+      throw Exception(json);
     }
   }
 

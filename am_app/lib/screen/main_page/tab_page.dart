@@ -16,14 +16,14 @@ class TabPage extends StatefulWidget {
 class _TabPageState extends State<TabPage> with SingleTickerProviderStateMixin {
   final List<Tab> _tabs = [
     const Tab(
-        icon: Icon(Icons.map, size: 25),
-        child: Text('Map', style: TextStyle(fontSize: 15))),
+        icon: Icon(Icons.map, size: 20),
+        child: Text('Map', style: TextStyle(fontSize: 10))),
     const Tab(
-        icon: Icon(Icons.person, size: 25),
-        child: Text('Account', style: TextStyle(fontSize: 15))),
+        icon: Icon(Icons.person, size: 20),
+        child: Text('Account', style: TextStyle(fontSize: 10))),
     const Tab(
-        icon: Icon(Icons.admin_panel_settings, size: 25),
-        child: Text('Admin', style: TextStyle(fontSize: 15)))
+        icon: Icon(Icons.admin_panel_settings, size: 20),
+        child: Text('Admin', style: TextStyle(fontSize: 10)))
   ];
 
   late TabController _tabController;
@@ -54,7 +54,7 @@ class _TabPageState extends State<TabPage> with SingleTickerProviderStateMixin {
           userProvider.username != null
               ? const UserInfoPage()
               : const LoginPage(),
-          AdminPage()
+          const AdminPage()
         ],
       ),
       bottomNavigationBar: Container(
