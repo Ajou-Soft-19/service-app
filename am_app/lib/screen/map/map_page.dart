@@ -139,7 +139,8 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
       _markers.add(userMarker);
 
       // debugPrint("sending: ${_locationData.toString()}");
-    });  }
+    });
+  }
 
   void _moveCameraToCurrentLocation() {
     _controller!.animateCamera(
@@ -212,8 +213,7 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
                     _locationData.longitude!,
                     _locationData.latitude!,
                     destination.longitude,
-                    destination.latitude,
-                    userProvider);
+                    destination.latitude);
 
                 routePoints = navigationData!.pathPointsToLatLng();
               } catch (e) {

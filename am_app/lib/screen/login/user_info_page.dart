@@ -171,12 +171,15 @@ class _UserInfoPageState extends State<UserInfoPage> {
     required Color backgroundColor,
     required String text,
   }) {
+    double screenWidth = MediaQuery.of(context).size.width;
+    double buttonWidth = screenWidth > 600 ? 600 : screenWidth * 0.8;
+
     return Material(
       elevation: 5.0,
       borderRadius: BorderRadius.circular(30.0),
       color: backgroundColor,
       child: MaterialButton(
-        minWidth: MediaQuery.of(context).size.width * 0.8,
+        minWidth: buttonWidth,
         padding: const EdgeInsets.fromLTRB(30.0, 15.0, 30.0, 15.0),
         onPressed: onPressed,
         child: Text(

@@ -9,12 +9,7 @@ class ApiService extends TokenApiUtils {
   final serviceServerUrl = dotenv.env['SERVICE_SERVER_URL']!;
 
   Future<NavigationData> getNavigationPathNoLogin(
-      double startLng,
-      double startLat,
-      double endLng,
-      double endLat,
-      UserProvider userProvider) async {
-    await checkLoginStatus(userProvider);
+      double startLng, double startLat, double endLng, double endLat) async {
     print("request: $startLng, $startLat, $endLng, $endLat");
     var url = Uri.parse('$serviceServerUrl/api/navi/route');
     var body = jsonEncode({
