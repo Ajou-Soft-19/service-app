@@ -17,7 +17,7 @@ class VehicleApi extends TokenApiUtils {
     final url = Uri.parse('$serviceServerUrl/api/vehicles/all');
     final response = await http
         .get(url, headers: await getHeaders(authRequired: true))
-        .timeout(timoutTime, onTimeout: () {
+        .timeout(timeoutTime, onTimeout: () {
       throw TimeoutException(ExceptionMessage.SERVER_NOT_RESPONDING);
     });
 
@@ -44,7 +44,7 @@ class VehicleApi extends TokenApiUtils {
         'vehicleType': vehicleType,
       }),
     )
-        .timeout(timoutTime, onTimeout: () {
+        .timeout(timeoutTime, onTimeout: () {
       throw TimeoutException(ExceptionMessage.SERVER_NOT_RESPONDING);
     });
 
@@ -56,7 +56,7 @@ class VehicleApi extends TokenApiUtils {
     final url = Uri.parse('$serviceServerUrl/api/vehicles/$vehicleId');
     final response = await http
         .delete(url, headers: await getHeaders(authRequired: true))
-        .timeout(timoutTime, onTimeout: () {
+        .timeout(timeoutTime, onTimeout: () {
       throw TimeoutException(ExceptionMessage.SERVER_NOT_RESPONDING);
     });
 
@@ -76,7 +76,7 @@ class VehicleApi extends TokenApiUtils {
         'vehicleType': vehicleType,
       }),
     )
-        .timeout(timoutTime, onTimeout: () {
+        .timeout(timeoutTime, onTimeout: () {
       throw TimeoutException(ExceptionMessage.SERVER_NOT_RESPONDING);
     });
 

@@ -14,7 +14,7 @@ import 'dto/jwt_token_info.dart';
 
 class TokenApiUtils {
   final loginServerUrl = dotenv.env['LOGIN_SERVER_URL']!;
-  final timoutTime = const Duration(seconds: 5);
+  final timeoutTime = const Duration(seconds: 5);
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
 
   Future<Map<String, String>> getHeaders({bool authRequired = false}) async {
@@ -64,7 +64,7 @@ class TokenApiUtils {
     });
     final response = await http
         .post(url, headers: headers, body: body)
-        .timeout(timoutTime, onTimeout: () {
+        .timeout(timeoutTime, onTimeout: () {
       throw TimeoutException(ExceptionMessage.SERVER_NOT_RESPONDING);
     });
 

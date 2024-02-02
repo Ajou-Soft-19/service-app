@@ -23,7 +23,7 @@ class UserInfoApi extends TokenApiUtils {
         'username': username,
       }),
     )
-        .timeout(timoutTime, onTimeout: () {
+        .timeout(timeoutTime, onTimeout: () {
       throw TimeoutException(ExceptionMessage.SERVER_NOT_RESPONDING);
     });
 
@@ -39,7 +39,7 @@ class UserInfoApi extends TokenApiUtils {
     final url = Uri.parse('$loginServerUrl/api/whoami');
     final response = await http
         .get(url, headers: await getHeaders(authRequired: true))
-        .timeout(timoutTime, onTimeout: () {
+        .timeout(timeoutTime, onTimeout: () {
       throw TimeoutException(ExceptionMessage.SERVER_NOT_RESPONDING);
     });
 
@@ -60,7 +60,7 @@ class UserInfoApi extends TokenApiUtils {
       headers: await getHeaders(authRequired: true),
       body: jsonEncode(<String, String>{'username': newUsername}),
     )
-        .timeout(timoutTime, onTimeout: () {
+        .timeout(timeoutTime, onTimeout: () {
       throw TimeoutException(ExceptionMessage.SERVER_NOT_RESPONDING);
     });
 
@@ -81,7 +81,7 @@ class UserInfoApi extends TokenApiUtils {
         "newPassword": newPassword
       }),
     )
-        .timeout(timoutTime, onTimeout: () {
+        .timeout(timeoutTime, onTimeout: () {
       throw TimeoutException(ExceptionMessage.SERVER_NOT_RESPONDING);
     });
 

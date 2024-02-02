@@ -18,7 +18,7 @@ class EmailVerifyApi extends TokenApiUtils {
         'code': code,
       }),
     )
-        .timeout(timoutTime, onTimeout: () {
+        .timeout(timeoutTime, onTimeout: () {
       throw TimeoutException(ExceptionMessage.SERVER_NOT_RESPONDING);
     });
 
@@ -30,7 +30,7 @@ class EmailVerifyApi extends TokenApiUtils {
         Uri.parse('$loginServerUrl/api/email-verification?email=$email');
     final response = await http
         .get(url, headers: await getHeaders())
-        .timeout(timoutTime, onTimeout: () {
+        .timeout(timeoutTime, onTimeout: () {
       throw TimeoutException(ExceptionMessage.SERVER_NOT_RESPONDING);
     });
 

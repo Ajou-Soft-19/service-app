@@ -48,7 +48,7 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
     _getLocation();
     _initSocketListener();
     FlutterCompass.events?.listen((CompassEvent event) {
-      debugPrint(event.toString());
+      // debugPrint(event.toString());
       _currentHeading = event.heading!;
     });
   }
@@ -58,6 +58,7 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
         Provider.of<VehicleProvider>(context, listen: false);
     final userProvider = Provider.of<UserProvider>(context, listen: false);
     _initSocket(userProvider, vehicleProvider);
+    socketService.startSendingLocationData(_locationData, _isUsingNavi);
     vehicleProvider.addListener(() {
       _initSocket(userProvider, vehicleProvider);
     });
@@ -120,7 +121,8 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
   void _startNavigation() {
     _locationSubscription?.cancel(); // Cancel any previous subscription
 
-    _locationSubscription = _location.onLocationChanged.listen((l.LocationData currentLocation) {
+    _locationSubscription =
+        _location.onLocationChanged.listen((l.LocationData currentLocation) {
       setState(() {
         _locationData = currentLocation;
         _updateUserMarker();
@@ -139,12 +141,12 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
   }
 
   void _updateUserMarker() async {
-    BitmapDescriptor customIcon = await getBitmapDescriptorFromAssetBytes('assets/navigation.png', 100);
+    BitmapDescriptor customIcon =
+        await getBitmapDescriptorFromAssetBytes('assets/navigation.png', 110);
 
     Marker userMarker = Marker(
       markerId: const MarkerId('user'),
       position: LatLng(_locationData.latitude!, _locationData.longitude!),
-      // rotation: _locationData.heading!,
       // The rotation is the direction of travel
       rotation: _currentHeading / 180 * pi,
       icon: customIcon,
@@ -152,9 +154,11 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
     setState(() {
       _markers.removeWhere((marker) => marker.markerId.value == 'user');
       _markers.add(userMarker);
+
+      // debugPrint("sending: ${_locationData.toString()}");
     });
 
-    socketService.startSendingLocationData(_locationData, _isUsingNavi);
+
   }
 
   void _moveCameraToCurrentLocation() {

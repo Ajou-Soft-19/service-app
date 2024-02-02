@@ -25,7 +25,7 @@ class LoginApi extends TokenApiUtils {
         },
       ),
     )
-        .timeout(timoutTime, onTimeout: () {
+        .timeout(timeoutTime, onTimeout: () {
       throw TimeoutException("Request took too long.");
     });
 
@@ -52,7 +52,7 @@ class LoginApi extends TokenApiUtils {
       headers: await getHeaders(authRequired: true),
       body: jsonEncode({'refreshToken': refreshToken}),
     )
-        .timeout(timoutTime, onTimeout: () {
+        .timeout(timeoutTime, onTimeout: () {
       throw TimeoutException(ExceptionMessage.SERVER_NOT_RESPONDING);
     });
 
