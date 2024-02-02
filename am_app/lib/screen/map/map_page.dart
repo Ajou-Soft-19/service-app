@@ -32,7 +32,7 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
   l.LocationData _locationData =
       l.LocationData.fromMap({'latitude': 37.1234, 'longitude': 127.1234});
   final Set<Polyline> _polylines = {};
-  final Set<Marker> _markers = {}; // Add this line
+  final Set<Marker> _markers = {};
   List<p.PlacesSearchResult> _placesResult = [];
   StreamSubscription<l.LocationData>? _locationSubscription;
   NavigationData? navigationData;
@@ -54,6 +54,7 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
     vehicleProvider.addListener(() {
       socketService.initSocket(userProvider, vehicleProvider);
     });
+    socketService.startSendingLocationData(_location, _isUsingNavi);
   }
 
   @override
@@ -132,8 +133,6 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
       _markers.removeWhere((marker) => marker.markerId.value == 'user');
       _markers.add(userMarker);
     });
-
-    socketService.startSendingLocationData(_locationData, _isUsingNavi);
   }
 
   void _moveCameraToCurrentLocation() {

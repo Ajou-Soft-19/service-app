@@ -13,6 +13,8 @@ class SocketService extends TokenApiUtils {
   final url = "${dotenv.env['SOCKET_SERVER_URL']}/ws/my-location";
   StreamSubscription<LocationData>? _locationSubscription;
 
+  late String? _jwt;
+  late int? _vehicleId;
   bool _isConnected = false;
 
   Future<void> initSocket(userProvider, vehicleProvider) async {
@@ -20,30 +22,50 @@ class SocketService extends TokenApiUtils {
       close();
     }
 
-    await _connectWithNoLogin();
-    _initializeWithNoLogin();
+    debugPrint('Initializing Emergency socket');
+    try {
+      await checkLoginStatus(userProvider);
+    } on TokenExpiredException {
+      debugPrint('Token expired');
+      return;
+    } catch (e) {
+      debugPrint('Error checking login status: $e');
+      return;
+    }
+
+    await _connectWithLogin(userProvider.accessToken);
+    _initializeWithLogin(
+      int.parse(vehicleProvider.vehicleId!),
+    );
 
     // socketService.emergencyVehicleUpdates.listen((data){
     //   print('Emergency vehicle data: $data');
     // });
   }
 
-  Future<void> _connectWithNoLogin() async {
+  Future<void> _connectWithLogin(String jwt) async {
+    _jwt = jwt;
     try {
-      final socket = await WebSocket.connect(url);
+      final socket = await WebSocket.connect(url, headers: {
+        'Authorization': 'Bearer $jwt',
+      });
 
       _channel = IOWebSocketChannel(socket);
       _isConnected = true;
     } catch (e) {
       debugPrint('Error connecting to socket: $e');
     }
-    debugPrint('Connected to socket');
   }
 
-  void _initializeWithNoLogin() {
-    debugPrint('Initializing Guest socket');
+  void _initializeWithLogin(int vehicleId) {
+    _vehicleId = vehicleId;
+
     final initMessage = {
       'requestType': 'INIT',
+      'jwt': 'Bearer $_jwt',
+      'data': {
+        'vehicleId': _vehicleId,
+      },
     };
 
     _channel.sink.add(jsonEncode(initMessage));
@@ -55,11 +77,11 @@ class SocketService extends TokenApiUtils {
     });
   }
 
-  void startSendingLocationData(Location location, bool isUsingNavi) {
+  void startSendingLocationData(LocationData locationData, bool isUsingNavi) {
     _locationSubscription?.cancel(); // Cancel any previous subscription
 
-    _locationSubscription = Stream.periodic(const Duration(seconds: 5))
-        .asyncMap((_) => location.getLocation())
+    _locationSubscription = Stream.periodic(const Duration(seconds: 10))
+        .asyncMap((_) => Future.value(locationData))
         .listen((LocationData currentLocation) {
       final data = {
         'requestType': 'UPDATE',
@@ -69,10 +91,13 @@ class SocketService extends TokenApiUtils {
           'isUsingNavi': isUsingNavi,
           'meterPerSec': currentLocation.speed ?? 0.0,
           'direction': currentLocation.heading ?? 0.0,
-          'timestamp': DateTime.now().toUtc().toIso8601String(),
+          'timestamp': DateTime.now().toIso8601String(),
+          'onEmergencyEvent': 'false',
+          'naviPathId': 0,
+          'emergencyEventId': 0
         },
       };
-      debugPrint("Sending data: $data");
+      debugPrint("Sending data: $data"); // Log the data being sent
       _channel.sink.add(jsonEncode(data));
     });
   }
