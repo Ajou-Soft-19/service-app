@@ -1,11 +1,14 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:am_app/model/api/dto/navigation_path.dart';
 import 'package:am_app/model/provider/user_provider.dart';
 import 'package:am_app/model/provider/vehicle_provider.dart';
 import 'package:am_app/screen/asset/assets.dart';
+import 'package:am_app/screen/image_resize.dart';
 import 'package:am_app/screen/map/socket_service.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_compass/flutter_compass.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:location/location.dart' as l;
 import 'package:google_maps_webservice/places.dart' as p;
@@ -37,6 +40,8 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
   StreamSubscription<l.LocationData>? _locationSubscription;
   NavigationData? navigationData;
   bool _isUsingNavi = false;
+  double _currentHeading = 0.0;
+
   final socketService = SocketService();
 
   @override
@@ -44,6 +49,10 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
     super.initState();
     _getLocation();
     _initSocketListener();
+    FlutterCompass.events?.listen((CompassEvent event) {
+      // debugPrint(event.toString());
+      _currentHeading = event.heading!;
+    });
   }
 
   void _initSocketListener() async {
@@ -99,8 +108,6 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
         _location.onLocationChanged.listen((l.LocationData currentLocation) {
       setState(() {
         _locationData = currentLocation;
-
-        // Update the user's marker to reflect the new location
         _updateUserMarker();
 
         _moveCameraToCurrentLocation();
@@ -117,30 +124,30 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
   }
 
   void _updateUserMarker() async {
-    final BitmapDescriptor customIcon = await BitmapDescriptor.fromAssetImage(
-      const ImageConfiguration(devicePixelRatio: 0.5),
-      'assets/navigation.png',
-    );
+    BitmapDescriptor customIcon =
+        await getBitmapDescriptorFromAssetBytes('assets/navigation.png', 110);
 
     Marker userMarker = Marker(
       markerId: const MarkerId('user'),
       position: LatLng(_locationData.latitude!, _locationData.longitude!),
-      rotation: _locationData.heading!,
       // The rotation is the direction of travel
+      rotation: _currentHeading / 180 * pi,
       icon: customIcon,
     );
     setState(() {
       _markers.removeWhere((marker) => marker.markerId.value == 'user');
       _markers.add(userMarker);
-    });
-  }
+
+      // debugPrint("sending: ${_locationData.toString()}");
+    });  }
 
   void _moveCameraToCurrentLocation() {
     _controller!.animateCamera(
       CameraUpdate.newCameraPosition(
         CameraPosition(
           target: LatLng(_locationData.latitude!, _locationData.longitude!),
-          zoom: 24.0,
+          zoom: 18.0,
+          bearing: _currentHeading,
         ),
       ),
     );
@@ -227,6 +234,7 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
           Flexible(
             child: Stack(children: [
               GoogleMap(
+                compassEnabled: true,
                 onMapCreated: (controller) {
                   _controller = controller;
                 },
