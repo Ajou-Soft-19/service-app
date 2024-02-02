@@ -4,7 +4,6 @@ import 'dart:convert';
 import 'package:am_app/model/api/exception/exception_message.dart';
 import 'package:am_app/model/api/exception/token_expired.dart';
 import 'package:am_app/model/provider/user_provider.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;

@@ -131,4 +131,19 @@ class UserProvider with ChangeNotifier {
     isLoaded = true;
     notifyListeners();
   }
+
+  bool hasRole(String roleName) {
+    if (_role == null) {
+      return false;
+    }
+    return _role!.contains(roleName);
+  }
+
+  bool hasEmergencyRole() {
+    return hasRole('ROLE_EMERGENCY');
+  }
+
+  bool hasAdminRole() {
+    return hasRole('ROLE_ADMIN');
+  }
 }

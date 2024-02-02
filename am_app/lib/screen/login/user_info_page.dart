@@ -53,6 +53,13 @@ class _UserInfoPageState extends State<UserInfoPage> {
     );
   }
 
+  void onAuthorizationRequest(VehicleProvider vehicleProvider) async {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const VehicleListPage()),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final userProvider = Provider.of<UserProvider>(context);
@@ -75,20 +82,7 @@ class _UserInfoPageState extends State<UserInfoPage> {
                   style: const TextStyle(
                       fontSize: 24, fontWeight: FontWeight.bold),
                 ),
-                vehicleProvider.licenseNumber != null
-                    ? Text(
-                        'vechicle license: ${vehicleProvider.licenseNumber}',
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                            fontSize: 24, fontWeight: FontWeight.bold),
-                      )
-                    : const Text(
-                        'Select your vechicle',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                            fontSize: 24, fontWeight: FontWeight.bold),
-                      ),
-                const SizedBox(height: 10),
+                _buildCarLicence(userProvider, vehicleProvider),
                 Text(
                   email,
                   textAlign: TextAlign.center,
@@ -102,6 +96,24 @@ class _UserInfoPageState extends State<UserInfoPage> {
         ),
       ),
     );
+  }
+
+  Widget _buildCarLicence(
+      UserProvider userProvider, VehicleProvider vehicleProvider) {
+    if (!(userProvider.hasEmergencyRole() || userProvider.hasAdminRole())) {
+      return const SizedBox();
+    }
+    return vehicleProvider.licenseNumber != null
+        ? Text(
+            'vechicle license: ${vehicleProvider.licenseNumber}',
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+          )
+        : const Text(
+            'Select your vechicle',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+          );
   }
 
   ClipOval buildProfileImage() {
@@ -127,11 +139,17 @@ class _UserInfoPageState extends State<UserInfoPage> {
     return Column(
       children: [
         const SizedBox(height: 20),
-        _buildActionButton(
-          onPressed: () => onVehiclePressed(vehicleProvider),
-          backgroundColor: Colors.indigo,
-          text: '차량 조회 및 등록',
-        ),
+        (userProvider.hasEmergencyRole() || userProvider.hasAdminRole())
+            ? _buildActionButton(
+                onPressed: () => onVehiclePressed(vehicleProvider),
+                backgroundColor: Colors.indigo,
+                text: '차량 선택',
+              )
+            : _buildActionButton(
+                onPressed: () => onVehiclePressed(vehicleProvider),
+                backgroundColor: Colors.indigo,
+                text: '응급 차량 권한 요청',
+              ),
         const SizedBox(height: 10),
         _buildActionButton(
           onPressed: () => onEditInfoPressed(userProvider),
