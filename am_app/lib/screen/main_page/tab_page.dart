@@ -21,9 +21,6 @@ class _TabPageState extends State<TabPage> with SingleTickerProviderStateMixin {
     const Tab(
         icon: Icon(Icons.person, size: 20),
         child: Text('Account', style: TextStyle(fontSize: 10))),
-    const Tab(
-        icon: Icon(Icons.admin_panel_settings, size: 20),
-        child: Text('Admin', style: TextStyle(fontSize: 10)))
   ];
 
   late TabController _tabController;
@@ -54,7 +51,6 @@ class _TabPageState extends State<TabPage> with SingleTickerProviderStateMixin {
           userProvider.username != null
               ? const UserInfoPage()
               : const LoginPage(),
-          const AdminPage()
         ],
       ),
       bottomNavigationBar: Container(

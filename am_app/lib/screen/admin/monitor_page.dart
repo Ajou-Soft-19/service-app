@@ -22,8 +22,8 @@ class AdminPage extends StatefulWidget {
   _AdminPageState createState() => _AdminPageState();
 }
 
-class _AdminPageState extends State<AdminPage>
-    with AutomaticKeepAliveClientMixin<AdminPage> {
+class _AdminPageState extends State<AdminPage> {
+  Orientation? _originalOrientation;
   GoogleMapController? _controller;
   MonitorApi monitorApi = MonitorApi();
   final _mapService = MapService();
@@ -48,6 +48,10 @@ class _AdminPageState extends State<AdminPage>
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      // 프레임 렌더링 후에 현재 화면 방향을 저장합니다.
+      _originalOrientation = MediaQuery.of(context).orientation;
+    });
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.landscapeLeft,
       DeviceOrientation.landscapeRight,
@@ -59,10 +63,17 @@ class _AdminPageState extends State<AdminPage>
 
   @override
   void dispose() {
-    SystemChrome.setPreferredOrientations([
-      DeviceOrientation.portraitUp,
-      DeviceOrientation.portraitDown,
-    ]);
+    if (_originalOrientation == Orientation.portrait) {
+      SystemChrome.setPreferredOrientations([
+        DeviceOrientation.portraitUp,
+        DeviceOrientation.portraitDown,
+      ]);
+    } else {
+      SystemChrome.setPreferredOrientations([
+        DeviceOrientation.landscapeLeft,
+        DeviceOrientation.landscapeRight,
+      ]);
+    }
     _vehicleStatusTimer?.cancel();
     super.dispose();
   }
@@ -286,8 +297,13 @@ class _AdminPageState extends State<AdminPage>
 
   Future<void> drawEmergencyPath(
       UserProvider userProvider, VehicleStatus vehicleStatus) async {
-    navigationData = await monitorApi.getEmergencyNavigationPath(
-        userProvider, vehicleStatus);
+    try {
+      navigationData = await monitorApi.getEmergencyNavigationPath(
+          userProvider, vehicleStatus);
+    } catch (e) {
+      Assets().showErrorSnackBar(context, e.toString());
+      return;
+    }
     List<LatLng> routePoints = navigationData!.pathPointsToLatLng();
     Polyline newRoute = await _mapService.drawRouteRed(routePoints);
     setState(() {
@@ -313,7 +329,6 @@ class _AdminPageState extends State<AdminPage>
 
   @override
   Widget build(BuildContext context) {
-    super.build(context);
     UserProvider userProvider = Provider.of<UserProvider>(context);
 
     return Scaffold(
@@ -465,7 +480,4 @@ class _AdminPageState extends State<AdminPage>
                 },
               );
   }
-
-  @override
-  bool get wantKeepAlive => true;
 }
