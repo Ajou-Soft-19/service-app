@@ -1,10 +1,7 @@
 import 'dart:async';
-import 'dart:math';
 
 import 'package:am_app/model/api/dto/navigation_path.dart';
-import 'package:am_app/model/api/dto/vehicle.dart';
 import 'package:am_app/model/api/dto/vehicle_status.dart';
-import 'package:am_app/model/api/vehicle_api.dart';
 import 'package:am_app/model/provider/user_provider.dart';
 import 'package:am_app/screen/admin/monitor_api.dart';
 import 'package:am_app/screen/asset/assets.dart';

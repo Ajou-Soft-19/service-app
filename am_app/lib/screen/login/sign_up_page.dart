@@ -12,6 +12,7 @@ class SignUpPage extends StatefulWidget {
 class _SignUpPageState extends State<SignUpPage> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _phoneNumberController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmPasswordController =
       TextEditingController();
@@ -24,7 +25,7 @@ class _SignUpPageState extends State<SignUpPage> {
 
   Future<void> onCreatAccountPressed() async {
     UserInfoApi().createAccount(_emailController.text, _passwordController.text,
-        _usernameController.text);
+        _usernameController.text, _phoneNumberController.text);
   }
 
   InputDecoration _buildModernInputDecoration(String labelText) {
@@ -86,6 +87,17 @@ class _SignUpPageState extends State<SignUpPage> {
                         return '이메일을 입력해주세요.';
                       } else if (!_emailRegex.hasMatch(value)) {
                         return '잘못된 이메일입니다.';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 16.0),
+                  TextFormField(
+                    controller: _usernameController,
+                    decoration: _buildModernInputDecoration('전화번호'),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return '전화번호를 입력해주세요';
                       }
                       return null;
                     },

@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:ffi';
 import 'dart:math';
 
 import 'package:am_app/model/api/dto/api_response.dart';
@@ -9,7 +8,6 @@ import 'package:am_app/model/api/dto/vehicle_status.dart';
 import 'package:am_app/model/api/exception/exception_message.dart';
 import 'package:am_app/model/api/token_api_utils.dart';
 import 'package:am_app/model/provider/user_provider.dart';
-import 'package:am_app/screen/asset/assets.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 
