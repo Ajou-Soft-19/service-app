@@ -9,8 +9,7 @@ class VehicleStatus {
   final double direction;
   final Vehicle? vehicleInfo;
   final bool emergencyVehicle;
-  // final String? navigationPathId;
-  // final bool onAction;
+  final int emergencyEventId;
 
   VehicleStatus({
     required this.vehicleStatusId,
@@ -19,10 +18,9 @@ class VehicleStatus {
     required this.lastUpdateTime,
     required this.meterPerSec,
     required this.direction,
-    // this.navigationPathId,
     this.vehicleInfo,
     required this.emergencyVehicle,
-    // required this.onAction,
+    required this.emergencyEventId,
   });
 
   factory VehicleStatus.fromJson(Map<String, dynamic> json) {
@@ -33,12 +31,11 @@ class VehicleStatus {
       lastUpdateTime: json['lastUpdateTime'],
       meterPerSec: json['meterPerSec'],
       direction: json['direction'],
-      // navigationPathId: json['navigationPathId'],
       vehicleInfo: json['vehicleInfo'] != null
           ? Vehicle.fromJson(json['vehicleInfo'])
           : null,
       emergencyVehicle: json['emergencyVehicle'],
-      // onAction: json['onAction'],
+      emergencyEventId: json['emergencyEventId'] ?? -1,
     );
   }
 
@@ -51,4 +48,9 @@ class VehicleStatus {
 
   @override
   int get hashCode => vehicleStatusId.hashCode;
+
+  @override
+  String toString() {
+    return 'VehicleStatus(vehicleStatusId: $vehicleStatusId, longitude: $longitude, latitude: $latitude, lastUpdateTime: $lastUpdateTime, meterPerSec: $meterPerSec, direction: $direction, vehicleInfo: $vehicleInfo, emergencyVehicle: $emergencyVehicle, emergencyEventId: $emergencyEventId)';
+  }
 }

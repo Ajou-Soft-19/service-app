@@ -120,6 +120,10 @@ class _AdminPageState extends State<AdminPage> {
       } else {
         normalVehicles.add(vehicleStatus);
       }
+
+      if (vehicleStatus == selectedVehicleStatus) {
+        selectedVehicleStatus = vehicleStatus;
+      }
     }
 
     _addVehicleMarkers(normalVehicles, emergencyVehicles, radius);
@@ -157,7 +161,17 @@ class _AdminPageState extends State<AdminPage> {
   Future<void> _updateSelectedVehiclePathPoint(
       UserProvider userProvider) async {
     if (selectedVehicleStatus == null) return;
+    await _controller!.animateCamera(
+      CameraUpdate.newCameraPosition(
+        CameraPosition(
+          target: LatLng(selectedVehicleStatus!.latitude,
+              selectedVehicleStatus!.longitude),
+          zoom: 14.0,
+        ),
+      ),
+    );
     if (navigationData == null) return;
+    if (selectedVehicleStatus!.emergencyEventId == -1) return;
     int currentPathPoint = await monitorApi.getEmergencyVehicleCurrentPath(
         userProvider, selectedVehicleStatus!);
 
@@ -175,9 +189,9 @@ class _AdminPageState extends State<AdminPage> {
         await getBitmapDescriptorFromAssetBytesWithRadius(
             'assets/circle2.png', radius);
 
-    debugPrint('Adding vehicle markers');
-    debugPrint('Normal: ${normalVehicles.length}');
-    debugPrint('Emergency: ${emergencyVehicles.length}');
+    // debugPrint('Adding vehicle markers');
+    // debugPrint('Normal: ${normalVehicles.length}');
+    // debugPrint('Emergency: ${emergencyVehicles.length}');
     _markers.clear();
 
     for (var vehicleStatus in normalVehicles) {
@@ -302,22 +316,20 @@ class _AdminPageState extends State<AdminPage> {
     return selectedVehicleStatus!.vehicleStatusId.toString() == vehicleStatusId;
   }
 
-  onSelect(VehicleStatus? vehicleStatus, UserProvider userProvider) async {
+  void onSelect(VehicleStatus? vehicleStatus, UserProvider userProvider) async {
+    debugPrint('Selected vehicle: $vehicleStatus');
     bool moveCamera = false;
 
-    if (vehicleStatus == null) {
+    if (vehicleStatus == null ||
+        selectedVehicleStatus == null ||
+        selectedVehicleStatus != vehicleStatus) {
       setState(() {
-        selectedVehicleStatus = null;
+        selectedVehicleStatus = vehicleStatus;
         _polylines.clear();
         _circles.clear();
       });
-    } else if (selectedVehicleStatus == null ||
-        selectedVehicleStatus!.toString() != vehicleStatus.toString()) {
-      setState(() {
-        selectedVehicleStatus = vehicleStatus;
-      });
       moveCamera = true;
-    } else if (selectedVehicleStatus!.toString() == vehicleStatus.toString()) {
+    } else if (selectedVehicleStatus == vehicleStatus) {
       setState(() {
         selectedVehicleStatus = null;
         _polylines.clear();
@@ -326,8 +338,8 @@ class _AdminPageState extends State<AdminPage> {
     }
 
     if (!moveCamera || vehicleStatus == null) return;
+
     // TODO: 응급 상황인 응급차는 다르게 표시하기
-    //if (!vehicleStatus.onAction) return;
 
     await _controller!.animateCamera(
       CameraUpdate.newCameraPosition(
@@ -343,6 +355,7 @@ class _AdminPageState extends State<AdminPage> {
 
   Future<void> drawEmergencyPath(
       UserProvider userProvider, VehicleStatus vehicleStatus) async {
+    if (vehicleStatus.emergencyEventId == -1) return;
     try {
       navigationData = await monitorApi.getEmergencyNavigationPath(
           userProvider, vehicleStatus);
@@ -551,8 +564,11 @@ class _AdminPageState extends State<AdminPage> {
                     elevation: 5,
                     margin: const EdgeInsets.all(7),
                     child: ListTile(
-                      leading: const Icon(Icons.directions_car,
-                          color: Colors.indigo, size: 40),
+                      leading: vehicleStatus.emergencyEventId != -1
+                          ? const Icon(Icons.warning_amber_outlined,
+                              color: Colors.red, size: 40)
+                          : const Icon(Icons.directions_car,
+                              color: Colors.indigo, size: 40),
                       title: Text(vehicle.licenseNumber,
                           style: const TextStyle(
                               fontSize: 20, fontWeight: FontWeight.bold)),
