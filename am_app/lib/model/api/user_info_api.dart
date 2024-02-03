@@ -9,8 +9,8 @@ import 'dto/api_response.dart';
 import 'exception/exception_message.dart';
 
 class UserInfoApi extends TokenApiUtils {
-  Future<void> createAccount(
-      String email, String password, String username) async {
+  Future<void> createAccount(String email, String password, String username,
+      String phoneNumber) async {
     final url = Uri.parse('$loginServerUrl/api/account/create');
 
     final response = await http
@@ -21,6 +21,7 @@ class UserInfoApi extends TokenApiUtils {
         'email': email,
         'password': password,
         'username': username,
+        'phoneNumber': phoneNumber
       }),
     )
         .timeout(timeoutTime, onTimeout: () {
