@@ -2,10 +2,12 @@ import 'package:am_app/model/api/login_api.dart';
 import 'package:am_app/model/provider/user_provider.dart';
 import 'package:am_app/model/provider/vehicle_provider.dart';
 import 'package:am_app/screen/admin/monitor_page.dart';
+import 'package:am_app/screen/asset/assets.dart';
 import 'package:am_app/screen/login/edit_user_info_page.dart';
 import 'package:am_app/screen/vehicle/vehicle_list_page.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:am_app/model/api/token_api_utils.dart';
 
 class UserInfoPage extends StatefulWidget {
   const UserInfoPage({Key? key}) : super(key: key);
@@ -54,11 +56,13 @@ class _UserInfoPageState extends State<UserInfoPage> {
     );
   }
 
-  void onAuthorizationRequest(VehicleProvider vehicleProvider) async {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => const VehicleListPage()),
-    );
+  void onAuthorizationRequest(UserProvider userProvider) async {
+    try{
+      await LoginApi().requestEmergencyRole(userProvider);
+    }
+    catch(e){
+      Assets().showErrorSnackBar(context, e.toString());
+    }
   }
 
   void onMonitoringPressed() {
@@ -154,8 +158,8 @@ class _UserInfoPageState extends State<UserInfoPage> {
                 text: '차량 선택',
               )
             : _buildActionButton(
-                onPressed: () => onVehiclePressed(vehicleProvider),
-                backgroundColor: Colors.indigo,
+                onPressed: () => onAuthorizationRequest(userProvider),
+                backgroundColor: Colors.orange,
                 text: '응급 차량 권한 요청',
               ),
         userProvider.hasAdminRole()
