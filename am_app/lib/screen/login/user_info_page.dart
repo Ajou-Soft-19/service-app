@@ -1,6 +1,7 @@
 import 'package:am_app/model/api/login_api.dart';
 import 'package:am_app/model/provider/user_provider.dart';
 import 'package:am_app/model/provider/vehicle_provider.dart';
+import 'package:am_app/screen/admin/auth_request.dart';
 import 'package:am_app/screen/admin/monitor_page.dart';
 import 'package:am_app/screen/login/edit_user_info_page.dart';
 import 'package:am_app/screen/vehicle/vehicle_list_page.dart';
@@ -65,6 +66,13 @@ class _UserInfoPageState extends State<UserInfoPage> {
     Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => const AdminPage()),
+    );
+  }
+
+  void onAuthRequestPressed() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const AuthManagePagState()),
     );
   }
 
@@ -164,11 +172,18 @@ class _UserInfoPageState extends State<UserInfoPage> {
                 backgroundColor: Colors.indigo,
                 text: '모니터링 페이지',
               )
-            : const SizedBox(height: 10),
+            : const SizedBox(height: 0),
+        userProvider.hasAdminRole()
+            ? _buildActionButton(
+                onPressed: () => onAuthRequestPressed(),
+                backgroundColor: Colors.indigo,
+                text: '권한 관리 페이지',
+              )
+            : const SizedBox(height: 0),
         _buildActionButton(
           onPressed: () => onEditInfoPressed(userProvider),
           backgroundColor: Colors.blue,
-          text: '닉네임 수정',
+          text: '유저 정보 수정',
         ),
         _buildActionButton(
           onPressed: () => onLogoutPressed(userProvider),
