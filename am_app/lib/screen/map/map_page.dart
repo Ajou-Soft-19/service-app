@@ -257,7 +257,7 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
                             .listen((l.LocationData currentLocation) {
                           setState(() {
                             _locationData = currentLocation;
-
+                            _isUsingNavi = true;
                             _updateUserMarker();
 
                             _moveCameraToCurrentLocation();

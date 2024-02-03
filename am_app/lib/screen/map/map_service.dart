@@ -9,7 +9,7 @@ class MapService {
       polylineId: const PolylineId('route'),
       visible: true,
       points: routePoints,
-      width: 2,
+      width: 5,
       color: Colors.blue,
     );
     return routeLine;
