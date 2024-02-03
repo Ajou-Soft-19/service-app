@@ -2,7 +2,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 class NavigationData {
   final int? naviPathId;
-  final String? vehicleId;
+  final int? vehicleId;
   final String provider;
   final Location sourceLocation;
   final Location destLocation;
@@ -10,7 +10,7 @@ class NavigationData {
   final double distance;
   final double duration;
   final int pathPointSize;
-  final int currentPathPoint;
+  int currentPathPoint;
   final List<PathPoint> pathPoint;
   final List<CheckPoint>? checkPoint;
   final bool emergencyPath;
@@ -64,6 +64,16 @@ class NavigationData {
         .map((point) =>
             LatLng(point.location.latitude, point.location.longitude))
         .toList();
+  }
+
+  CheckPoint? findNextCheckPoint() {
+    for (CheckPoint cp in checkPoint!) {
+      if (cp.pointIndex >= currentPathPoint) {
+        return cp;
+      }
+    }
+
+    return null;
   }
 }
 

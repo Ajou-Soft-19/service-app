@@ -1,4 +1,5 @@
 import 'package:am_app/model/provider/user_provider.dart';
+import 'package:am_app/screen/admin/monitor_page.dart';
 import 'package:am_app/screen/login/login_page.dart';
 import 'package:am_app/screen/login/user_info_page.dart';
 import 'package:am_app/screen/map/map_page.dart';
@@ -15,11 +16,11 @@ class TabPage extends StatefulWidget {
 class _TabPageState extends State<TabPage> with SingleTickerProviderStateMixin {
   final List<Tab> _tabs = [
     const Tab(
-        icon: Icon(Icons.map, size: 25),
-        child: Text('Map', style: TextStyle(fontSize: 15))),
+        icon: Icon(Icons.map, size: 20),
+        child: Text('Map', style: TextStyle(fontSize: 10))),
     const Tab(
-        icon: Icon(Icons.person, size: 25),
-        child: Text('Account', style: TextStyle(fontSize: 15))),
+        icon: Icon(Icons.person, size: 20),
+        child: Text('Account', style: TextStyle(fontSize: 10))),
   ];
 
   late TabController _tabController;

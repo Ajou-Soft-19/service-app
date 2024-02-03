@@ -1,6 +1,7 @@
 import 'package:am_app/model/api/login_api.dart';
 import 'package:am_app/model/provider/user_provider.dart';
 import 'package:am_app/model/provider/vehicle_provider.dart';
+import 'package:am_app/screen/admin/monitor_page.dart';
 import 'package:am_app/screen/login/edit_user_info_page.dart';
 import 'package:am_app/screen/vehicle/vehicle_list_page.dart';
 import 'package:flutter/material.dart';
@@ -57,6 +58,13 @@ class _UserInfoPageState extends State<UserInfoPage> {
     Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => const VehicleListPage()),
+    );
+  }
+
+  void onMonitoringPressed() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const AdminPage()),
     );
   }
 
@@ -139,7 +147,7 @@ class _UserInfoPageState extends State<UserInfoPage> {
     return Column(
       children: [
         const SizedBox(height: 20),
-        (userProvider.hasEmergencyRole() || userProvider.hasAdminRole())
+        userProvider.hasEmergencyRole()
             ? _buildActionButton(
                 onPressed: () => onVehiclePressed(vehicleProvider),
                 backgroundColor: Colors.indigo,
@@ -150,13 +158,18 @@ class _UserInfoPageState extends State<UserInfoPage> {
                 backgroundColor: Colors.indigo,
                 text: '응급 차량 권한 요청',
               ),
-        const SizedBox(height: 10),
+        userProvider.hasAdminRole()
+            ? _buildActionButton(
+                onPressed: () => onMonitoringPressed(),
+                backgroundColor: Colors.indigo,
+                text: '모니터링 페이지',
+              )
+            : const SizedBox(height: 10),
         _buildActionButton(
           onPressed: () => onEditInfoPressed(userProvider),
           backgroundColor: Colors.blue,
           text: '닉네임 수정',
         ),
-        const SizedBox(height: 10),
         _buildActionButton(
           onPressed: () => onLogoutPressed(userProvider),
           backgroundColor: Colors.red[500]!,
@@ -171,24 +184,32 @@ class _UserInfoPageState extends State<UserInfoPage> {
     required Color backgroundColor,
     required String text,
   }) {
-    return Material(
-      elevation: 5.0,
-      borderRadius: BorderRadius.circular(30.0),
-      color: backgroundColor,
-      child: MaterialButton(
-        minWidth: MediaQuery.of(context).size.width * 0.8,
-        padding: const EdgeInsets.fromLTRB(30.0, 15.0, 30.0, 15.0),
-        onPressed: onPressed,
-        child: Text(
-          text,
-          textAlign: TextAlign.center,
-          style: const TextStyle(
-            fontSize: 20,
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
+    double screenWidth = MediaQuery.of(context).size.width;
+    double buttonWidth = screenWidth > 600 ? 600 : screenWidth * 0.8;
+
+    return Column(
+      children: [
+        Material(
+          elevation: 5.0,
+          borderRadius: BorderRadius.circular(30.0),
+          color: backgroundColor,
+          child: MaterialButton(
+            minWidth: buttonWidth,
+            padding: const EdgeInsets.fromLTRB(30.0, 15.0, 30.0, 15.0),
+            onPressed: onPressed,
+            child: Text(
+              text,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 20,
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ),
         ),
-      ),
+        const SizedBox(height: 20),
+      ],
     );
   }
 }
