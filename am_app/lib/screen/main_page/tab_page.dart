@@ -16,11 +16,14 @@ class TabPage extends StatefulWidget {
 class _TabPageState extends State<TabPage> with SingleTickerProviderStateMixin {
   final List<Tab> _tabs = [
     const Tab(
-        icon: Icon(Icons.map, size: 20),
-        child: Text('Map', style: TextStyle(fontSize: 10))),
+      icon: Icon(Icons.map, size: 23),
+      iconMargin: EdgeInsets.zero,
+      child: Text('Map', style: TextStyle(fontSize: 15)),
+    ),
     const Tab(
-        icon: Icon(Icons.person, size: 20),
-        child: Text('Account', style: TextStyle(fontSize: 10))),
+        icon: Icon(Icons.person, size: 23),
+        iconMargin: EdgeInsets.zero,
+        child: Text('Account', style: TextStyle(fontSize: 15))),
   ];
 
   late TabController _tabController;
