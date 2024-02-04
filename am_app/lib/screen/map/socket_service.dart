@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math';
 import 'package:am_app/model/api/token_api_utils.dart';
 import 'package:am_app/model/singleton/location_singleton.dart';
 import 'package:flutter/material.dart';
@@ -59,12 +60,7 @@ class SocketService extends TokenApiUtils {
     _channel.sink.add(jsonEncode(initMessage));
 
     _channel.stream.listen((message) {
-      LatLng currentLocLatLng = LatLng(
-        LocationSingleton().currentLocation!.latitude!,
-        LocationSingleton().currentLocation!.longitude!,
-      );
-      debugPrint(
-          'Current distance between Emer: ${currentLocLatLng.toString()})}');
+      debugPrint("안녕하세요 제 위치는 ${LocationSingleton().currentLocation}");
       handleAlertMessage(message);
       debugPrint('Received: $message');
     }, onError: (error) {
@@ -75,16 +71,16 @@ class SocketService extends TokenApiUtils {
   void handleAlertMessage(dynamic message) {
     Map<String, dynamic> parsedJson = jsonDecode(message);
 
-    if (parsedJson['data']['code'] != 200) return;
-
-    Map<String, dynamic> data = parsedJson['data']['data'];
+    if (parsedJson['code'] != 200) return;
+    if (parsedJson['messageType'] != 'ALERT') return;
+    Map<String, dynamic> data = parsedJson['data'];
+    debugPrint("$data");
     EmergencyPathData emergencyPathData = EmergencyPathData.fromJson(data);
 
     // Creating LatLng list from PathPoints
-    List<LatLng> pathPoints = emergencyPathData.pathPoints
-        .map((point) =>
-        LatLng(point.location.latitude, point.location.longitude))
-        .toList();
+    Map<int, LatLng> pathPoints = emergencyPathData.pathPoints.map((index, point) =>
+        MapEntry(index, LatLng(point.location.latitude, point.location.longitude)));
+
 
     AlertSingleton().updateVehicleData(
         emergencyPathData.licenseNumber,
@@ -96,18 +92,11 @@ class SocketService extends TokenApiUtils {
     debugPrint('Vehicle Type: ${emergencyPathData.vehicleType}');
     debugPrint('Current Path Point: ${AlertSingleton().currentPathPoint}');
     debugPrint(
-        'Path Points: ${AlertSingleton().pathPoints?.map((e) => 'location: $e')
+        'Path Points: ${AlertSingleton().pathPoints?.entries.map((e) => 'index: ${e.key}, location: ${e.value}')
             .join(', ')}');
-    if(LocationSingleton().currentLocation != null) {
-      LatLng currentLocLatLng = LatLng(
-        LocationSingleton().currentLocation!.latitude!,
-        LocationSingleton().currentLocation!.longitude!,
-      );
-      debugPrint(
-          'Current distance between Emer: ${AlertSingleton().calculateDistance(
-              AlertSingleton().pathPoints![AlertSingleton().currentPathPoint!],
-              currentLocLatLng)}');
-    }
+    debugPrint(
+          'Current distance between Emer: ${AlertSingleton().calculateDistance(AlertSingleton().pathPoints![AlertSingleton().currentPathPoint!]!, LocationSingleton().currentLocLatLng)}');
+
   }
 
 
@@ -146,4 +135,5 @@ class SocketService extends TokenApiUtils {
   }
 
   bool get isConnected => _isConnected;
+
 }

@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:am_app/model/api/dto/navigation_path.dart';
 import 'package:am_app/model/provider/user_provider.dart';
 import 'package:am_app/model/provider/vehicle_provider.dart';
+import 'package:am_app/model/singleton/alert_singleton.dart';
 import 'package:am_app/model/singleton/location_singleton.dart';
 import 'package:am_app/screen/asset/assets.dart';
 import 'package:am_app/screen/image_resize.dart';
@@ -55,7 +56,6 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
     FlutterCompass.events?.listen((CompassEvent event) {
       _currentHeading = event.heading!;
     });
-    LocationSingleton().setLocationData(_locationData);
   }
 
   void _initSocketListener() async {
@@ -73,10 +73,6 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
   void dispose() {
     socketService.close();
     super.dispose();
-  }
-
-  l.LocationData getCurrentLatLng(){
-    return _locationData;
   }
 
   _getLocation() async {
@@ -116,8 +112,72 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
       setState(() {
         _locationData = currentLocation;
         _updateUserMarker();
-
         _moveCameraToCurrentLocation();
+        // _markers.add(AlertSingleton().checkAndCreateMarker()!);
+        Marker? newMarker = AlertSingleton().checkAndCreateMarker();
+        if (newMarker != null) {
+          _markers.add(newMarker);
+          LatLng currentPathPointLatLng =
+              AlertSingleton().pathPoints![AlertSingleton().currentPathPoint!]!;
+          LatLng myLatLng = LocationSingleton().currentLocLatLng;
+          String direction = AlertSingleton().determineDirection(
+              AlertSingleton()
+                  .calculateBearing(myLatLng, currentPathPointLatLng) - _currentHeading);
+          debugPrint("$direction");
+          Alignment alignment;
+          switch (direction) {
+            case 'north':
+              alignment = Alignment.topCenter;
+              break;
+            case 'north_east':
+              alignment = Alignment.topRight;
+              break;
+            case 'east':
+              alignment = Alignment.centerRight;
+              break;
+            case 'south_east':
+              alignment = Alignment.bottomRight;
+              break;
+            case 'south':
+              alignment = Alignment.bottomCenter;
+              break;
+            case 'south_west':
+              alignment = Alignment.bottomLeft;
+              break;
+            case 'west':
+              alignment = Alignment.centerLeft;
+              break;
+            case 'north_west':
+              alignment = Alignment.topLeft;
+              break;
+            default:
+              alignment = Alignment.center;
+              break;
+          }
+
+          showDialog(
+            context: context,
+            builder: (BuildContext context) {
+              Future.delayed(Duration(seconds: 3), () {
+                Navigator.of(context).pop(true);
+              });
+              return Stack(
+                children: <Widget>[
+                  const SizedBox(),
+                  Align(
+                    alignment: alignment,
+                    child: const Icon(
+                      Icons.warning,
+                      size: 48,
+                      color: Colors.red,
+                    ),
+                  ),
+                ],
+              );
+            },
+          );
+
+        }
       });
       // TODO: Send location data to the server
     });
@@ -145,7 +205,6 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
     setState(() {
       _markers.removeWhere((marker) => marker.markerId.value == 'user');
       _markers.add(userMarker);
-
       // debugPrint("sending: ${_locationData.toString()}");
     });
   }

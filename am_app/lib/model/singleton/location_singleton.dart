@@ -1,3 +1,4 @@
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:location/location.dart';
 
 class LocationSingleton {
@@ -6,36 +7,24 @@ class LocationSingleton {
   factory LocationSingleton() {
     return _singleton;
   }
-
-  LocationSingleton._internal();
-
+  Location location = Location();
   LocationData? _currentLocation;
 
+  LocationSingleton._internal(){
+    location.onLocationChanged.listen((LocationData currentLocation){
+      _currentLocation = currentLocation;
+    });
+  }
+
+  LatLng get currentLocLatLng => LatLng(
+    _currentLocation?.latitude ?? 0,
+    _currentLocation?.longitude ?? 0,
+  );
   LocationData? get currentLocation => _currentLocation;
 
   Future<LocationData?> getCurrentLocation() async {
-    Location location = new Location();
-    bool _serviceEnabled;
-    PermissionStatus _permissionGranted;
+    Location location = Location();
     LocationData _locationData;
-
-    // _serviceEnabled = await location.serviceEnabled();
-    // if (!_serviceEnabled) {
-    //   _serviceEnabled = await location.requestService();
-    //   if (!_serviceEnabled) {
-    //     return null;
-    //   }
-    // }
-    //
-    // _permissionGranted = await location.hasPermission();
-    // if (_permissionGranted == PermissionStatus.denied) {
-    //   _permissionGranted = await location.requestPermission();
-    //   if (_permissionGranted != PermissionStatus.granted) {
-    //     return null;
-    //   }
-    // }
-
-    print("Hello");
 
     _locationData = await location.getLocation();
     _currentLocation = _locationData;

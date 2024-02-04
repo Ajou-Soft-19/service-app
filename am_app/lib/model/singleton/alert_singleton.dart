@@ -3,6 +3,8 @@ import 'dart:math';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
+import 'location_singleton.dart';
+
 class AlertSingleton {
   static final AlertSingleton _singleton = AlertSingleton._internal();
 
@@ -16,13 +18,13 @@ class AlertSingleton {
 
   String? _licenseNumber;
   int? _currentPathPoint;
-  List<LatLng>? _pathPoints;
+  Map<int, LatLng>? _pathPoints;
 
   String? get licenseNumber => _licenseNumber;
   int? get currentPathPoint => _currentPathPoint;
-  List<LatLng>? get pathPoints => _pathPoints;
+  Map<int, LatLng>? get pathPoints => _pathPoints;
 
-  void updateVehicleData(String licenseNumber, int currentPathPoint, List<LatLng> pathPoints) {
+  void updateVehicleData(String licenseNumber, int currentPathPoint, Map<int, LatLng> pathPoints) {
     _licenseNumber = licenseNumber;
     _currentPathPoint = currentPathPoint;
     _pathPoints = pathPoints;
@@ -37,7 +39,6 @@ class AlertSingleton {
     String? storedLicenseNumber = await _storage.read(key: 'licenseNumber');
     return storedLicenseNumber != null && storedLicenseNumber == licenseNumber;
   }
-
   double calculateDistance(LatLng point1, LatLng point2) {
     const double R = 6371e3; // metres
     var lat1 = point1.latitude * pi / 180; // φ, λ in radians
@@ -67,5 +68,49 @@ class AlertSingleton {
 
     return bearing;
   }
+
+  Marker? checkAndCreateMarker() {
+    LatLng currentPathPointLatLng = AlertSingleton().pathPoints![AlertSingleton().currentPathPoint!]!;
+    LatLng myLatLng = LocationSingleton().currentLocLatLng;
+    double distance = calculateDistance(myLatLng, currentPathPointLatLng);
+    if (distance >= 1000) {
+      double bearing = calculateBearing(myLatLng, currentPathPointLatLng);
+      print("각도: $bearing");
+      Marker marker = Marker(
+        markerId: const MarkerId('emergencyMarker'),
+        position: currentPathPointLatLng,
+        icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
+        infoWindow: InfoWindow(
+          title: 'Vehicle is coming',
+          snippet: 'Direction: $bearing degrees',
+        ),
+      );
+      return marker;
+    }
+    return null;
+  }
+
+  String determineDirection(double bearing) {
+    if (bearing >= 337.5 || bearing < 22.5) {
+      return 'north';
+    } else if (bearing >= 22.5 && bearing < 67.5) {
+      return 'north_east';
+    } else if (bearing >= 67.5 && bearing < 112.5) {
+      return 'east';
+    } else if (bearing >= 112.5 && bearing < 157.5) {
+      return 'south_east';
+    } else if (bearing >= 157.5 && bearing < 202.5) {
+      return 'south';
+    } else if (bearing >= 202.5 && bearing < 247.5) {
+      return 'south_west';
+    } else if (bearing >= 247.5 && bearing < 292.5) {
+      return 'west';
+    } else if (bearing >= 292.5 && bearing < 337.5) {
+      return 'north_west';
+    } else {
+      return 'unknown';
+    }
+  }
+
 
 }

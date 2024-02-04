@@ -4,7 +4,7 @@ class EmergencyPathData {
   final String licenseNumber;
   final String vehicleType;
   final int currentPathPoint;
-  final List<PathPoint> pathPoints;
+  final Map<int, PathPoint> pathPoints;
 
   EmergencyPathData({
     required this.licenseNumber,
@@ -18,9 +18,7 @@ class EmergencyPathData {
       licenseNumber: json['licenseNumber'],
       vehicleType: json['vehicleType'],
       currentPathPoint: json['currentPathPoint'],
-      pathPoints: (json['pathPoints'] as List)
-          .map((e) => PathPoint.fromJson(e as Map<String, dynamic>))
-          .toList(),
+      pathPoints: { for (var item in json['pathPoints']) item['index'] : PathPoint.fromJson(item) },
     );
   }
 }
