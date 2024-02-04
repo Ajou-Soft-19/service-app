@@ -12,7 +12,7 @@ void main() async {
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (context) => UserProvider()),
-        ChangeNotifierProvider(create: (context) => VehicleProvider())
+        ChangeNotifierProvider(create: (context) => VehicleProvider()),
       ],
       child: const MyApp(),
     ),

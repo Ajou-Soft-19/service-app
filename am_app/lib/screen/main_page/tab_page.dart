@@ -47,7 +47,9 @@ class _TabPageState extends State<TabPage> with SingleTickerProviderStateMixin {
         physics: const NeverScrollableScrollPhysics(),
         controller: _tabController,
         children: [
-          const MapPage(),
+          userProvider.hasEmergencyRole() ?
+            const MapPage() :
+            const MapPage(),
           userProvider.username != null
               ? const UserInfoPage()
               : const LoginPage(),

@@ -62,12 +62,11 @@ class LoginApi extends TokenApiUtils {
 
   Future<void> requestEmergencyRole(UserProvider userProvider) async {
     await checkLoginStatus(userProvider);
-    final url = Uri.parse('$loginServerUrl/api/auth/roles');
+    final url = Uri.parse('$serviceServerUrl/api/auth/roles');
     await http
         .post(url, headers: await getHeaders(authRequired: true))
         .timeout(timeoutTime,
             onTimeout: (throw TimeoutException(
                 ExceptionMessage.SERVER_NOT_RESPONDING)));
-    return;
   }
 }

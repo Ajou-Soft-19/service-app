@@ -93,7 +93,7 @@ class _SignUpPageState extends State<SignUpPage> {
                   ),
                   const SizedBox(height: 16.0),
                   TextFormField(
-                    controller: _usernameController,
+                    controller: _phoneNumberController,
                     decoration: _buildModernInputDecoration('전화번호'),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
