@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:am_app/model/api/token_api_utils.dart';
+import 'package:am_app/model/provider/user_provider.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'exception/email_not_verified.dart';
@@ -56,6 +57,17 @@ class LoginApi extends TokenApiUtils {
       throw TimeoutException(ExceptionMessage.SERVER_NOT_RESPONDING);
     });
 
+    return;
+  }
+
+  Future<void> requestEmergencyRole(UserProvider userProvider) async {
+    await checkLoginStatus(userProvider);
+    final url = Uri.parse('$loginServerUrl/api/auth/roles');
+    await http
+        .post(url, headers: await getHeaders(authRequired: true))
+        .timeout(timeoutTime,
+            onTimeout: (throw TimeoutException(
+                ExceptionMessage.SERVER_NOT_RESPONDING)));
     return;
   }
 }
