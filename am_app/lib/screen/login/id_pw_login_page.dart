@@ -1,6 +1,7 @@
 import 'package:am_app/model/api/login_api.dart';
 import 'package:am_app/model/api/exception/email_not_verified.dart';
 import 'package:am_app/model/provider/user_provider.dart';
+import 'package:am_app/screen/asset/app_bar.dart';
 import 'package:am_app/screen/asset/assets.dart';
 import 'package:am_app/screen/login/sign_up_page.dart';
 import 'package:flutter/material.dart';
@@ -20,11 +21,23 @@ class _IdPwLoginPageState extends State<IdPwLoginPage> {
   final _formKey = GlobalKey<FormState>();
   Pattern pattern =
       r'^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$';
-
   String _email = '';
   String _password = '';
   bool _isLoading = false;
   final LoginApi _loginApi = LoginApi();
+  late FocusNode myFocusNode;
+
+  @override
+  void initState() {
+    super.initState();
+    myFocusNode = FocusNode();
+  }
+
+  @override
+  void dispose() {
+    myFocusNode.dispose();
+    super.dispose();
+  }
 
   void onLoginPressed(UserProvider userProvider) async {
     setState(() {
@@ -70,7 +83,10 @@ class _IdPwLoginPageState extends State<IdPwLoginPage> {
   Widget build(BuildContext context) {
     final userProvider = Provider.of<UserProvider>(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('로그인')),
+      appBar: const CustomAppBar(
+        title: '로그인',
+        backButton: true,
+      ),
       backgroundColor: Colors.white,
       body: SafeArea(
         child: Align(
@@ -115,6 +131,9 @@ class _IdPwLoginPageState extends State<IdPwLoginPage> {
                           child: Column(
                             children: [
                               TextFormField(
+                                textInputAction: TextInputAction.next,
+                                onEditingComplete: () => FocusScope.of(context)
+                                    .requestFocus(myFocusNode),
                                 decoration: InputDecoration(
                                   labelText: '이메일',
                                   labelStyle: const TextStyle(fontSize: 18),
@@ -146,6 +165,7 @@ class _IdPwLoginPageState extends State<IdPwLoginPage> {
                               ),
                               const SizedBox(height: 20),
                               TextFormField(
+                                focusNode: myFocusNode,
                                 decoration: InputDecoration(
                                   labelText: '비밀번호',
                                   labelStyle: const TextStyle(fontSize: 18),

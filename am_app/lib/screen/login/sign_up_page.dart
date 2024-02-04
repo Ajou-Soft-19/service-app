@@ -1,4 +1,5 @@
 import 'package:am_app/model/api/user_info_api.dart';
+import 'package:am_app/screen/asset/app_bar.dart';
 import 'package:am_app/screen/asset/assets.dart';
 import 'package:flutter/material.dart';
 
@@ -20,8 +21,29 @@ class _SignUpPageState extends State<SignUpPage> {
   final RegExp _passwordRegex =
       RegExp(r'^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$');
   final RegExp _emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
-
+  late FocusNode emailFocusNode;
+  late FocusNode phoneNumberFocusNode;
+  late FocusNode passwordFocusNode;
+  late FocusNode confirmPasswordFocusNode;
   bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    emailFocusNode = FocusNode();
+    phoneNumberFocusNode = FocusNode();
+    passwordFocusNode = FocusNode();
+    confirmPasswordFocusNode = FocusNode();
+  }
+
+  @override
+  void dispose() {
+    emailFocusNode.dispose();
+    phoneNumberFocusNode.dispose();
+    passwordFocusNode.dispose();
+    confirmPasswordFocusNode.dispose();
+    super.dispose();
+  }
 
   Future<void> onCreatAccountPressed() async {
     UserInfoApi().createAccount(_emailController.text, _passwordController.text,
@@ -57,7 +79,7 @@ class _SignUpPageState extends State<SignUpPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('계정 생성하기')),
+      appBar: const CustomAppBar(title: '계정 생성하기', backButton: true),
       body: Center(
         child: SingleChildScrollView(
           child: Align(
@@ -73,6 +95,10 @@ class _SignUpPageState extends State<SignUpPage> {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       TextFormField(
+                        textInputAction: TextInputAction.next,
+                        onFieldSubmitted: (_) {
+                          FocusScope.of(context).requestFocus(emailFocusNode);
+                        },
                         controller: _usernameController,
                         decoration: _buildModernInputDecoration('유저 이름'),
                         validator: (value) {
@@ -84,6 +110,12 @@ class _SignUpPageState extends State<SignUpPage> {
                       ),
                       const SizedBox(height: 16.0),
                       TextFormField(
+                        focusNode: emailFocusNode,
+                        textInputAction: TextInputAction.next,
+                        onFieldSubmitted: (_) {
+                          FocusScope.of(context)
+                              .requestFocus(phoneNumberFocusNode);
+                        },
                         controller: _emailController,
                         decoration: _buildModernInputDecoration('이메일'),
                         validator: (value) {
@@ -97,6 +129,12 @@ class _SignUpPageState extends State<SignUpPage> {
                       ),
                       const SizedBox(height: 16.0),
                       TextFormField(
+                        focusNode: phoneNumberFocusNode,
+                        textInputAction: TextInputAction.next,
+                        onFieldSubmitted: (_) {
+                          FocusScope.of(context)
+                              .requestFocus(passwordFocusNode);
+                        },
                         controller: _phoneNumberController,
                         decoration: _buildModernInputDecoration('전화번호'),
                         validator: (value) {
@@ -108,6 +146,12 @@ class _SignUpPageState extends State<SignUpPage> {
                       ),
                       const SizedBox(height: 16.0),
                       TextFormField(
+                        focusNode: passwordFocusNode,
+                        textInputAction: TextInputAction.next,
+                        onFieldSubmitted: (_) {
+                          FocusScope.of(context)
+                              .requestFocus(confirmPasswordFocusNode);
+                        },
                         controller: _passwordController,
                         obscureText: true,
                         decoration: _buildModernInputDecoration('비밀번호'),
@@ -125,6 +169,7 @@ class _SignUpPageState extends State<SignUpPage> {
                       ),
                       const SizedBox(height: 16.0),
                       TextFormField(
+                        focusNode: confirmPasswordFocusNode,
                         controller: _confirmPasswordController,
                         obscureText: true,
                         decoration: _buildModernInputDecoration('비밀번호 확인'),
