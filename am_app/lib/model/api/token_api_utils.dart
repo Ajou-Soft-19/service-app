@@ -13,6 +13,7 @@ import 'dto/jwt_token_info.dart';
 
 class TokenApiUtils {
   final loginServerUrl = dotenv.env['LOGIN_SERVER_URL']!;
+  final serviceServerUrl = dotenv.env['SERVICE_SERVER_URL']!;
   final timeoutTime = const Duration(seconds: 5);
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
 

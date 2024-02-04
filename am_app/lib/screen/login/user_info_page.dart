@@ -58,10 +58,31 @@ class _UserInfoPageState extends State<UserInfoPage> {
   }
 
   void onAuthorizationRequest(UserProvider userProvider) async {
-    try{
-      await LoginApi().requestEmergencyRole(userProvider);
+    if (userProvider.hasRequestedEmergencyRole()) {
+      Assets().showErrorSnackBar(context, '이미 권한 요청을 했습니다.');
+      return;
     }
-    catch(e){
+
+    try {
+      int requestId = await LoginApi().requestEmergencyRole(userProvider);
+      userProvider.setRequestedEmergencyRole(requestId);
+      Assets().showSnackBar(context, '권한 요청을 했습니다.');
+    } catch (e) {
+      Assets().showErrorSnackBar(context, e.toString());
+    }
+  }
+
+  void onAuthorizationRequestCheck(UserProvider userProvider) async {
+    if (userProvider.hasRequestedEmergencyRole() == false) {
+      Assets().showErrorSnackBar(context, '권한 요청을 하지 않았습니다.');
+      return;
+    }
+    
+    try {
+      await LoginApi().checkRequestEmergencyRole(userProvider);
+      userProvider.removeRequestedEmergencyRole();
+      Assets().showSnackBar(context, '권한 요청을 했습니다.');
+    } catch (e) {
       Assets().showErrorSnackBar(context, e.toString());
     }
   }
@@ -165,11 +186,17 @@ class _UserInfoPageState extends State<UserInfoPage> {
                 backgroundColor: Colors.indigo,
                 text: '차량 선택',
               )
-            : _buildActionButton(
-                onPressed: () => onAuthorizationRequest(userProvider),
-                backgroundColor: Colors.orange,
-                text: '응급 차량 권한 요청',
-              ),
+            : userProvider.hasRequestedEmergencyRole()
+                ? _buildActionButton(
+                    onPressed: () => onAuthorizationRequestCheck(userProvider),
+                    backgroundColor: Colors.orange,
+                    text: '권한 요청 결과 확인',
+                  )
+                : _buildActionButton(
+                    onPressed: () => onAuthorizationRequest(userProvider),
+                    backgroundColor: Colors.orange,
+                    text: '응급 차량 권한 요청',
+                  ),
         userProvider.hasAdminRole()
             ? _buildActionButton(
                 onPressed: () => onMonitoringPressed(),

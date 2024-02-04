@@ -60,14 +60,43 @@ class LoginApi extends TokenApiUtils {
     return;
   }
 
-  Future<void> requestEmergencyRole(UserProvider userProvider) async {
+  Future<int> requestEmergencyRole(UserProvider userProvider) async {
     await checkLoginStatus(userProvider);
-    final url = Uri.parse('$loginServerUrl/api/auth/roles');
-    await http
+    final url = Uri.parse('$serviceServerUrl/api/auth/roles');
+    final response = await http
         .post(url, headers: await getHeaders(authRequired: true))
-        .timeout(timeoutTime,
-            onTimeout: (throw TimeoutException(
-                ExceptionMessage.SERVER_NOT_RESPONDING)));
-    return;
+        .timeout(timeoutTime, onTimeout: () {
+      throw TimeoutException(ExceptionMessage.SERVER_NOT_RESPONDING);
+    });
+
+    await isResponseSuccess(response);
+
+    final json = jsonDecode(utf8.decode(response.bodyBytes));
+
+    return json['data']['requestId'];
+  }
+
+  Future<void> checkRequestEmergencyRole(UserProvider userProvider) async {
+    await checkLoginStatus(userProvider);
+    final requestId = userProvider.roleRequestId;
+    final url = Uri.parse(
+        '$serviceServerUrl/api/auth/roles/check-request?requestId=$requestId');
+    final response = await http
+        .get(url, headers: await getHeaders(authRequired: true))
+        .timeout(timeoutTime, onTimeout: () {
+      throw TimeoutException(ExceptionMessage.SERVER_NOT_RESPONDING);
+    });
+
+    await isResponseSuccess(response);
+
+    final json = jsonDecode(utf8.decode(response.bodyBytes));
+
+    if (json['data']['result'] == false) {
+      throw Exception(json['data']['msg']);
+    }
+
+    if (json['data']['result'] == true) {
+      await refreshTokens(userProvider);
+    }
   }
 }

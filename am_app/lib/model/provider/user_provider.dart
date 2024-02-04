@@ -11,6 +11,7 @@ class UserProvider with ChangeNotifier {
   String? _accessToken;
   String? _refreshToken;
   String? _profileImageUrl;
+  String? _roleRequestId;
 
   bool get isLoading => isLoaded;
   bool get isLoginExpired => _isLoginExpired;
@@ -20,6 +21,7 @@ class UserProvider with ChangeNotifier {
   String? get accessToken => _accessToken;
   String? get refreshToken => _refreshToken;
   String? get profileImageUrl => _profileImageUrl;
+  String? get roleRequestId => _roleRequestId;
 
   Future<void> setState(String? username, String? email, String? role,
       String? accessToken, String? refreshToken, bool isLoginExpired) async {
@@ -128,6 +130,7 @@ class UserProvider with ChangeNotifier {
     _role = await _storage.read(key: 'role');
     _accessToken = await _storage.read(key: 'accessToken');
     _refreshToken = await _storage.read(key: 'refreshToken');
+    _roleRequestId = await _storage.read(key: 'role_request_id');
     isLoaded = true;
     notifyListeners();
   }
@@ -145,5 +148,21 @@ class UserProvider with ChangeNotifier {
 
   bool hasAdminRole() {
     return hasRole('ROLE_ADMIN');
+  }
+
+  bool hasRequestedEmergencyRole() {
+    return _roleRequestId != null;
+  }
+
+  void setRequestedEmergencyRole(int requestId) {
+    _roleRequestId = requestId.toString();
+    _storage.write(key: 'role_request_id', value: _roleRequestId);
+    notifyListeners();
+  }
+
+  void removeRequestedEmergencyRole() {
+    _roleRequestId = null;
+    _storage.delete(key: 'role_request_id');
+    notifyListeners();
   }
 }
