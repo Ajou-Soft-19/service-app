@@ -6,12 +6,9 @@ import 'package:am_app/model/api/dto/vehicle.dart';
 import 'package:am_app/model/api/exception/exception_message.dart';
 import 'package:am_app/model/api/token_api_utils.dart';
 import 'package:am_app/model/provider/user_provider.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 
 class VehicleApi extends TokenApiUtils {
-  final serviceServerUrl = dotenv.env['SERVICE_SERVER_URL']!;
-
   Future<List<Vehicle>> getVehicleInfo(UserProvider userProvider) async {
     await checkLoginStatus(userProvider);
     final url = Uri.parse('$serviceServerUrl/api/vehicles/all');

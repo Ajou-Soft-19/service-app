@@ -49,7 +49,7 @@ class MonitorApi extends TokenApiUtils {
       UserProvider userProvider) async {
     await checkLoginStatus(userProvider);
     await checkAdminRole(userProvider);
-    final url = Uri.parse('$serviceServerUrl/api/admin/emergency/all');
+    final url = Uri.parse('$serviceServerUrl/api/admin/monit/vehicle-status/emergency/all');
 
     final response = await http
         .get(url, headers: await getHeaders(authRequired: true))

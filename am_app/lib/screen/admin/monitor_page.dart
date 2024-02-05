@@ -591,7 +591,7 @@ class _AdminPageState extends State<AdminPage> {
                       leading: vehicleStatus.emergencyEventId != -1
                           ? const Icon(Icons.warning_amber_outlined,
                               color: Colors.red, size: 40)
-                          : const Icon(Icons.directions_car,
+                          : Icon(getIconBasedOnVehicleType(vehicle.vehicleType),
                               color: Colors.indigo, size: 40),
                       title: Text(vehicle.licenseNumber,
                           style: const TextStyle(
@@ -604,6 +604,26 @@ class _AdminPageState extends State<AdminPage> {
                   );
                 },
               );
+  }
+
+  IconData getIconBasedOnVehicleType(String vehicleType) {
+    switch (vehicleType) {
+      case 'LIGHTWEIGHT_CAR':
+      case 'SMALL_CAR':
+      case 'MEDIUM_CAR':
+      case 'LARGE_CAR':
+        return Icons.directions_car;
+      case 'LARGE_TRUCK':
+      case 'SPECIAL_TRUCK':
+        return Icons.local_shipping;
+      case 'AMBULANCE':
+        return Icons.local_hospital;
+      case 'FIRE_TRUCK_MEDIUM':
+      case 'FIRE_TRUCK_LARGE':
+        return Icons.local_fire_department;
+      default:
+        return Icons.directions_car;
+    }
   }
 
   Widget _buildListMenu(UserProvider userProvider) {

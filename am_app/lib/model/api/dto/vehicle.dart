@@ -14,7 +14,7 @@ class Vehicle {
     return Vehicle(
       vehicleId: json['vehicleId'],
       licenseNumber: json['licenceNumber'],
-      vehicleType: "vehicleType",
+      vehicleType: json['vehicleType'],
       isEmergency: false,
     );
   }
