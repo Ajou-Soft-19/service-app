@@ -156,6 +156,7 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
           }
 
           showDialog(
+            barrierColor: Colors.transparent,
             context: context,
             builder: (BuildContext context) {
               Future.delayed(Duration(seconds: 3), () {
