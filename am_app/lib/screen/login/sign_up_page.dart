@@ -200,7 +200,6 @@ class _SignUpPageState extends State<SignUpPage> {
                                       Assets()
                                           .showPopup(context, '계정 생성에 실패했습니다.');
                                     }
-
                                     setState(() {
                                       _isLoading = false;
                                     });

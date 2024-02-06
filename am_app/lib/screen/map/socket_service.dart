@@ -1,18 +1,30 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math';
 import 'package:am_app/model/api/token_api_utils.dart';
+import 'package:am_app/model/singleton/location_singleton.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:web_socket_channel/io.dart';
 import 'package:location/location.dart';
+import '../../model/api/dto/alert_info.dart';
+import '../../model/singleton/alert_singleton.dart';
 
 class SocketService extends TokenApiUtils {
   late IOWebSocketChannel _channel;
   final url = "${dotenv.env['SOCKET_SERVER_URL']}/ws/my-location";
   StreamSubscription<LocationData>? _locationSubscription;
-
+  bool _isUsingNavi = false;
   bool _isConnected = false;
+
+  final jsonDecoder = StreamTransformer<String, dynamic>.fromHandlers(
+    handleData: (String data, EventSink<dynamic> sink) {
+      sink.add(jsonDecode(data));
+    },
+  );
+
 
   Future<void> initSocket(userProvider, vehicleProvider) async {
     if (isConnected) {
@@ -48,13 +60,47 @@ class SocketService extends TokenApiUtils {
     _channel.sink.add(jsonEncode(initMessage));
 
     _channel.stream.listen((message) {
+      debugPrint("안녕하세요 제 위치는 ${LocationSingleton().currentLocation}");
+      handleAlertMessage(message);
       debugPrint('Received: $message');
     }, onError: (error) {
       debugPrint('Error: $error');
     });
   }
 
-  void startSendingLocationData(Location location, bool isUsingNavi) {
+  void handleAlertMessage(dynamic message) {
+    Map<String, dynamic> parsedJson = jsonDecode(message);
+
+    if (parsedJson['code'] != 200) return;
+    if (parsedJson['messageType'] != 'ALERT') return;
+    Map<String, dynamic> data = parsedJson['data'];
+    debugPrint("$data");
+    EmergencyPathData emergencyPathData = EmergencyPathData.fromJson(data);
+
+    // Creating LatLng list from PathPoints
+    Map<int, LatLng> pathPoints = emergencyPathData.pathPoints.map((index, point) =>
+        MapEntry(index, LatLng(point.location.latitude, point.location.longitude)));
+
+
+    AlertSingleton().updateVehicleData(
+        emergencyPathData.licenseNumber,
+        emergencyPathData.currentPathPoint,
+        pathPoints
+    );
+
+    debugPrint('License Number: ${AlertSingleton().licenseNumber}');
+    debugPrint('Vehicle Type: ${emergencyPathData.vehicleType}');
+    debugPrint('Current Path Point: ${AlertSingleton().currentPathPoint}');
+    debugPrint(
+        'Path Points: ${AlertSingleton().pathPoints?.entries.map((e) => 'index: ${e.key}, location: ${e.value}')
+            .join(', ')}');
+    debugPrint(
+          'Current distance between Emer: ${AlertSingleton().calculateDistance(AlertSingleton().pathPoints![AlertSingleton().currentPathPoint!]!, LocationSingleton().currentLocLatLng)}');
+
+  }
+
+
+  void startSendingLocationData(Location location) {
     _locationSubscription?.cancel(); // Cancel any previous subscription
 
     _locationSubscription = Stream.periodic(const Duration(seconds: 5))
@@ -65,7 +111,7 @@ class SocketService extends TokenApiUtils {
         'data': {
           'longitude': currentLocation.longitude,
           'latitude': currentLocation.latitude,
-          'isUsingNavi': isUsingNavi,
+          'isUsingNavi': _isUsingNavi,
           'meterPerSec': currentLocation.speed ?? 0.0,
           'direction': currentLocation.heading ?? 0.0,
           'timestamp': DateTime.now().toUtc().toIso8601String(),
@@ -76,9 +122,9 @@ class SocketService extends TokenApiUtils {
     });
   }
 
-  //
-  // Stream<dynamic> get emergencyVehicleUpdates =>
-  //     _channel.stream.transform(jsonDecoder);
+  void setUsingNavi(bool isUsingNavi) {
+    _isUsingNavi = isUsingNavi;
+  }
 
   void close() {
     if (_isConnected == false) return;
@@ -89,4 +135,5 @@ class SocketService extends TokenApiUtils {
   }
 
   bool get isConnected => _isConnected;
+
 }
