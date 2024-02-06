@@ -5,6 +5,7 @@ import 'dart:math';
 import 'package:am_app/model/api/dto/api_response.dart';
 import 'package:am_app/model/api/dto/navigation_path.dart';
 import 'package:am_app/model/api/dto/vehicle_status.dart';
+import 'package:am_app/model/api/dto/warn_record.dart';
 import 'package:am_app/model/api/exception/exception_message.dart';
 import 'package:am_app/model/api/token_api_utils.dart';
 import 'package:am_app/model/provider/user_provider.dart';
@@ -48,7 +49,7 @@ class MonitorApi extends TokenApiUtils {
       UserProvider userProvider) async {
     await checkLoginStatus(userProvider);
     await checkAdminRole(userProvider);
-    final url = Uri.parse('$serviceServerUrl/api/admin/emergency/all');
+    final url = Uri.parse('$serviceServerUrl/api/admin/monit/vehicle-status/emergency/all');
 
     final response = await http
         .get(url, headers: await getHeaders(authRequired: true))
@@ -108,6 +109,64 @@ class MonitorApi extends TokenApiUtils {
     } else {
       throw Exception('Failed to send coordinates and receive path points');
     }
+  }
+
+  Future<List<WarnRecord>> getWarnRecordsByEmergencyEventId(
+      UserProvider userProvider, int emergencyEventId) async {
+    await checkLoginStatus(userProvider);
+    await checkAdminRole(userProvider);
+    final url = Uri.parse('$serviceServerUrl/api/admin/monit/warn-list');
+
+    final response = await http
+        .post(
+      url,
+      headers: await getHeaders(authRequired: true),
+      body: jsonEncode({
+        'emergencyEventId': emergencyEventId,
+        'checkPointIndex': null,
+      }),
+    )
+        .timeout(timeoutTime, onTimeout: () {
+      throw TimeoutException(ExceptionMessage.SERVER_NOT_RESPONDING);
+    });
+
+    await isResponseSuccess(response);
+
+    final json = ApiResponse.fromJson(utf8.decode(response.bodyBytes));
+    final warnRecords = (json.data as List)
+        .map((warnRecordJson) => WarnRecord.fromJson(warnRecordJson))
+        .toList();
+    return warnRecords;
+  }
+
+  Future<List<WarnRecord>> getWarnRecordsByEmergencyEventIdAndCheckPointIndx(
+      UserProvider userProvider,
+      int emergencyEventId,
+      int checkPointIndex) async {
+    await checkLoginStatus(userProvider);
+    await checkAdminRole(userProvider);
+    final url = Uri.parse('$serviceServerUrl/api/admin/monit/warn-list');
+
+    final response = await http
+        .post(
+      url,
+      headers: await getHeaders(authRequired: true),
+      body: jsonEncode({
+        'emergencyEventId': emergencyEventId,
+        'checkPointIndex': checkPointIndex,
+      }),
+    )
+        .timeout(timeoutTime, onTimeout: () {
+      throw TimeoutException(ExceptionMessage.SERVER_NOT_RESPONDING);
+    });
+
+    await isResponseSuccess(response);
+
+    final json = ApiResponse.fromJson(utf8.decode(response.bodyBytes));
+    final warnRecords = (json.data as List)
+        .map((warnRecordJson) => WarnRecord.fromJson(warnRecordJson))
+        .toList();
+    return warnRecords;
   }
 
   double calculateDistance(double lat1, double lon1, double lat2, double lon2) {

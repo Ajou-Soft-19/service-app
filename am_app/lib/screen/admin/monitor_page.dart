@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:am_app/model/api/dto/navigation_path.dart';
 import 'package:am_app/model/api/dto/vehicle_status.dart';
+import 'package:am_app/model/api/dto/warn_record.dart';
 import 'package:am_app/model/provider/user_provider.dart';
 import 'package:am_app/screen/admin/monitor_api.dart';
 import 'package:am_app/screen/asset/assets.dart';
@@ -27,14 +28,19 @@ class _AdminPageState extends State<AdminPage> {
 
   // 차량 정보를 담을 리스트
   List<VehicleStatus> _emergencyVehicleInfo = [];
-  bool _isLoading = true;
-  bool _getSucceed = false;
-  bool _showVehicleList = false;
-  bool _showEmergencyVehicleInMap = false;
   VehicleStatus? selectedVehicleStatus;
   List<VehicleStatus> normalVehicles = [];
   List<VehicleStatus> emergencyVehicles = [];
+  final Set<String> _warnedSessionIds = {};
   Timer? _vehicleStatusTimer;
+
+  // 조회 옵션들
+  bool _isLoading = true;
+  bool _getSucceed = false;
+  int _failureCount = 0;
+  bool _showVehicleList = false;
+  bool _showEmergencyVehicleInMap = false;
+  bool _trackSelectedVehicle = false;
 
   // 구글맵에 표시할 마커 및 원을 담을 리스트
   final Set<Circle> _circles = <Circle>{};
@@ -46,14 +52,12 @@ class _AdminPageState extends State<AdminPage> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      // 프레임 렌더링 후에 현재 화면 방향을 저장합니다.
       _originalOrientation = MediaQuery.of(context).orientation;
     });
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.landscapeLeft,
       DeviceOrientation.landscapeRight,
     ]);
-    // _addCircle(const LatLng(37.5665, 126.9780));
     _vehicleStatusTimer = Timer.periodic(
         const Duration(seconds: 2), (timer) => _updateVehicleStatus());
   }
@@ -84,18 +88,22 @@ class _AdminPageState extends State<AdminPage> {
       await _updateSelectedVehiclePathPoint(userProvider);
       setState(() {
         _getSucceed = true;
+        _failureCount = 0;
       });
     } catch (e) {
       debugPrint('Error updating vehicle status: $e');
-      setState(() {
-        _getSucceed = false;
-      });
+      _failureCount++;
+      if (_failureCount == 5) {
+        Assets().showErrorSnackBar(context, 'Failed to update vehicle status');
+        setState(() {
+          _getSucceed = false;
+        });
+      }
     }
   }
 
   Future<void> _fetchVehicleStatus(UserProvider userProvider) async {
     if (_controller == null) return;
-    debugPrint('Fetching vehicle status');
     LatLngBounds? bounds = await _controller!.getVisibleRegion();
     LatLng center = LatLng(
       (bounds.northeast.latitude + bounds.southwest.latitude) / 2,
@@ -125,7 +133,7 @@ class _AdminPageState extends State<AdminPage> {
         selectedVehicleStatus = vehicleStatus;
       }
     }
-
+    debugPrint('Vehicle Count: ${vehicleStatuses.length}');
     _addVehicleMarkers(normalVehicles, emergencyVehicles, radius);
   }
 
@@ -144,6 +152,15 @@ class _AdminPageState extends State<AdminPage> {
       }
     }
 
+    newVehicleStatuses.sort((a, b) {
+      if (a == selectedVehicleStatus) return -1;
+      if (b == selectedVehicleStatus) return 1;
+      if (a.emergencyEventId != -1 && b.emergencyEventId == -1) return -1;
+      if (b.emergencyEventId != -1 && a.emergencyEventId == -1) return 1;
+      return DateTime.parse(a.lastUpdateTime)
+          .compareTo(DateTime.parse(b.lastUpdateTime));
+    });
+
     if (!newVehicleStatuses.contains(selectedVehicleStatus)) {
       setState(() {
         selectedVehicleStatus = null;
@@ -161,15 +178,18 @@ class _AdminPageState extends State<AdminPage> {
   Future<void> _updateSelectedVehiclePathPoint(
       UserProvider userProvider) async {
     if (selectedVehicleStatus == null) return;
-    await _controller!.animateCamera(
-      CameraUpdate.newCameraPosition(
-        CameraPosition(
-          target: LatLng(selectedVehicleStatus!.latitude,
-              selectedVehicleStatus!.longitude),
-          zoom: 14.0,
+    if (_trackSelectedVehicle) {
+      double currentZoomLevel = await _controller!.getZoomLevel();
+      await _controller!.animateCamera(
+        CameraUpdate.newCameraPosition(
+          CameraPosition(
+            target: LatLng(selectedVehicleStatus!.latitude,
+                selectedVehicleStatus!.longitude),
+            zoom: currentZoomLevel,
+          ),
         ),
-      ),
-    );
+      );
+    }
     if (navigationData == null) return;
     if (selectedVehicleStatus!.emergencyEventId == -1) return;
     int currentPathPoint = await monitorApi.getEmergencyVehicleCurrentPath(
@@ -177,42 +197,70 @@ class _AdminPageState extends State<AdminPage> {
 
     navigationData!.currentPathPoint = currentPathPoint;
 
+    await _updateWranRecords(userProvider, currentPathPoint);
     await drawCheckPoint();
+  }
+
+  Future<void> _updateWranRecords(
+      UserProvider userProvider, int currentPathPoint) async {
+    if (selectedVehicleStatus == null) return;
+    if (selectedVehicleStatus!.emergencyEventId == -1) return;
+    List<WarnRecord> warnList =
+        await monitorApi.getWarnRecordsByEmergencyEventIdAndCheckPointIndx(
+            userProvider,
+            selectedVehicleStatus!.emergencyEventId,
+            currentPathPoint);
+
+    for (WarnRecord warn in warnList) {
+      for (String sessionId in warn.sessionIds) {
+        _warnedSessionIds.add(sessionId);
+      }
+    }
   }
 
   void _addVehicleMarkers(List<VehicleStatus> normalVehicles,
       List<VehicleStatus> emergencyVehicles, double radius) async {
     final BitmapDescriptor normalVehicleIcon =
         await getBitmapDescriptorFromAssetBytesWithRadius(
-            'assets/circle.png', radius);
+            'assets/circle_blue.png', radius, false);
+    final BitmapDescriptor normalVehicleWarnedIcon =
+        await getBitmapDescriptorFromAssetBytesWithRadius(
+            'assets/circle_black.png', radius, false);
     final BitmapDescriptor emergencyVehicleIcon =
         await getBitmapDescriptorFromAssetBytesWithRadius(
-            'assets/circle2.png', radius);
+            'assets/circle_red.png', radius, false);
 
-    // debugPrint('Adding vehicle markers');
-    // debugPrint('Normal: ${normalVehicles.length}');
-    // debugPrint('Emergency: ${emergencyVehicles.length}');
+    final BitmapDescriptor emergencyVehicleFocusIcon =
+        await getBitmapDescriptorFromAssetBytesWithRadius(
+            'assets/circle_red.png', radius, true);
+
     _markers.clear();
 
     for (var vehicleStatus in normalVehicles) {
+      bool isWarned = _warnedSessionIds.contains(vehicleStatus.vehicleStatusId);
+      BitmapDescriptor icon =
+          isWarned ? normalVehicleWarnedIcon : normalVehicleIcon;
       _markers.add(
         Marker(
           markerId: MarkerId(
               'normal_${vehicleStatus.vehicleStatusId.substring(0, 7)}'),
           position: LatLng(vehicleStatus.latitude, vehicleStatus.longitude),
-          icon: normalVehicleIcon,
+          icon: icon,
           onTap: () => _showVehicleStatusDialog(vehicleStatus),
         ),
       );
     }
 
     for (var vehicleStatus in emergencyVehicles) {
+      bool isFocused = selectedVehicleStatus == vehicleStatus;
+      BitmapDescriptor icon =
+          isFocused ? emergencyVehicleFocusIcon : emergencyVehicleIcon;
       _markers.add(
         Marker(
           markerId: MarkerId(
               'emergency_${vehicleStatus.vehicleStatusId.substring(0, 7)}'),
           position: LatLng(vehicleStatus.latitude, vehicleStatus.longitude),
-          icon: emergencyVehicleIcon,
+          icon: icon,
           onTap: () => _showVehicleStatusDialog(vehicleStatus),
         ),
       );
@@ -242,14 +290,16 @@ class _AdminPageState extends State<AdminPage> {
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
               _buildVehicleStatusText(
-                  'Vehicle ID', vehicleStatus.vehicleStatusId),
+                  'Session ID', vehicleStatus.vehicleStatusId),
+              _buildVehicleStatusText('Vehicle ID',
+                  vehicleStatus.vehicleInfo?.vehicleId.toString() ?? 'Unknown'),
               _buildVehicleStatusText('Latitude', '${vehicleStatus.latitude}'),
               _buildVehicleStatusText(
                   'Longitude', '${vehicleStatus.longitude}'),
-              _buildVehicleStatusText(
-                  'Speed', '${vehicleStatus.meterPerSec} m/s'),
-              _buildVehicleStatusText(
-                  'Direction', '${vehicleStatus.direction}°'),
+              _buildVehicleStatusText('Speed',
+                  '${(vehicleStatus.meterPerSec * 3.6).toStringAsFixed(2)} km/h'), // m/s를 km/h로 변환
+              _buildVehicleStatusText('Direction',
+                  '${vehicleStatus.direction.toStringAsFixed(2)}°'), // 소수점 두 자리까지 표시
             ],
           ),
           actions: [
@@ -302,7 +352,7 @@ class _AdminPageState extends State<AdminPage> {
         Circle(
           circleId: CircleId(circleId),
           center: position,
-          radius: 1000,
+          radius: 500,
           fillColor: Colors.blue.withOpacity(0.5),
           strokeWidth: 1,
           strokeColor: Colors.blue,
@@ -327,6 +377,7 @@ class _AdminPageState extends State<AdminPage> {
         selectedVehicleStatus = vehicleStatus;
         _polylines.clear();
         _circles.clear();
+        _warnedSessionIds.clear();
       });
       moveCamera = true;
     } else if (selectedVehicleStatus == vehicleStatus) {
@@ -334,6 +385,7 @@ class _AdminPageState extends State<AdminPage> {
         selectedVehicleStatus = null;
         _polylines.clear();
         _circles.clear();
+        _warnedSessionIds.clear();
       });
     }
 
@@ -351,6 +403,21 @@ class _AdminPageState extends State<AdminPage> {
     );
 
     await drawEmergencyPath(userProvider, vehicleStatus);
+    await _getSelectedWarnList(userProvider);
+  }
+
+  Future<void> _getSelectedWarnList(UserProvider userProvider) async {
+    if (selectedVehicleStatus == null) return;
+    if (selectedVehicleStatus!.emergencyEventId == -1) return;
+    List<WarnRecord> warnList =
+        await monitorApi.getWarnRecordsByEmergencyEventId(
+            userProvider, selectedVehicleStatus!.emergencyEventId);
+
+    for (WarnRecord warn in warnList) {
+      for (String sessionId in warn.sessionIds) {
+        _warnedSessionIds.add(sessionId);
+      }
+    }
   }
 
   Future<void> drawEmergencyPath(
@@ -427,18 +494,20 @@ class _AdminPageState extends State<AdminPage> {
         onPressed: () => Navigator.of(context).pop(),
       ),
       actions: [
-        IconButton(
-          icon: Icon(
-            _showVehicleList ? Icons.map : Icons.list,
-            color: Colors.white,
-          ),
+        MaterialButton(
           onPressed: () async {
             await _loadEmergencyVehicles(userProvider);
             setState(() {
               _showVehicleList = !_showVehicleList;
             });
           },
+          minWidth: 80.0,
+          child: Icon(
+            _showVehicleList ? Icons.close : Icons.list,
+            color: Colors.white,
+          ),
         ),
+        const SizedBox(width: 10),
       ],
     );
   }
@@ -481,52 +550,7 @@ class _AdminPageState extends State<AdminPage> {
             Expanded(
               flex: 1,
               child: Center(
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Tooltip(
-                      message: 'Unselect vehicle',
-                      child: FloatingActionButton(
-                        heroTag: 'Admin page cancel',
-                        onPressed: () {
-                          onSelect(null, userProvider);
-                        },
-                        backgroundColor: Colors.red,
-                        child: const Icon(Icons.cancel),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    _showEmergencyVehicleInMap
-                        ? Tooltip(
-                            message: 'Load All Emergency Vehicle',
-                            child: FloatingActionButton(
-                              heroTag: 'Admin page Toggle2',
-                              onPressed: () {
-                                setState(() {
-                                  _showEmergencyVehicleInMap =
-                                      !_showEmergencyVehicleInMap;
-                                });
-                              },
-                              backgroundColor: Colors.green,
-                              child: const Icon(Icons.public_sharp),
-                            ),
-                          )
-                        : Tooltip(
-                            message: 'Load Emergency Vehicle In Map',
-                            child: FloatingActionButton(
-                              heroTag: 'Admin page Toggle',
-                              onPressed: () {
-                                setState(() {
-                                  _showEmergencyVehicleInMap =
-                                      !_showEmergencyVehicleInMap;
-                                });
-                              },
-                              backgroundColor: Colors.blue,
-                              child: const Icon(Icons.map),
-                            ),
-                          ),
-                  ],
-                ),
+                child: _buildListMenu(userProvider),
               ),
             ),
           ],
@@ -567,7 +591,7 @@ class _AdminPageState extends State<AdminPage> {
                       leading: vehicleStatus.emergencyEventId != -1
                           ? const Icon(Icons.warning_amber_outlined,
                               color: Colors.red, size: 40)
-                          : const Icon(Icons.directions_car,
+                          : Icon(getIconBasedOnVehicleType(vehicle.vehicleType),
                               color: Colors.indigo, size: 40),
                       title: Text(vehicle.licenseNumber,
                           style: const TextStyle(
@@ -580,5 +604,86 @@ class _AdminPageState extends State<AdminPage> {
                   );
                 },
               );
+  }
+
+  IconData getIconBasedOnVehicleType(String vehicleType) {
+    switch (vehicleType) {
+      case 'LIGHTWEIGHT_CAR':
+      case 'SMALL_CAR':
+      case 'MEDIUM_CAR':
+      case 'LARGE_CAR':
+        return Icons.directions_car;
+      case 'LARGE_TRUCK':
+      case 'SPECIAL_TRUCK':
+        return Icons.local_shipping;
+      case 'AMBULANCE':
+        return Icons.local_hospital;
+      case 'FIRE_TRUCK_MEDIUM':
+      case 'FIRE_TRUCK_LARGE':
+        return Icons.local_fire_department;
+      default:
+        return Icons.directions_car;
+    }
+  }
+
+  Widget _buildListMenu(UserProvider userProvider) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Tooltip(
+          message: 'Unselect vehicle',
+          child: FloatingActionButton(
+            heroTag: 'Admin page cancel',
+            onPressed: () {
+              onSelect(null, userProvider);
+            },
+            backgroundColor: Colors.red,
+            child: const Icon(Icons.cancel),
+          ),
+        ),
+        const SizedBox(width: 10),
+        _showEmergencyVehicleInMap
+            ? Tooltip(
+                message: 'Load All Emergency Vehicle',
+                child: FloatingActionButton(
+                  heroTag: 'Admin page Toggle2',
+                  onPressed: () {
+                    setState(() {
+                      _showEmergencyVehicleInMap = !_showEmergencyVehicleInMap;
+                    });
+                  },
+                  backgroundColor: Colors.green,
+                  child: const Icon(Icons.public_sharp),
+                ),
+              )
+            : Tooltip(
+                message: 'Load Emergency Vehicle In Map',
+                child: FloatingActionButton(
+                  heroTag: 'Admin page Toggle',
+                  onPressed: () {
+                    setState(() {
+                      _showEmergencyVehicleInMap = !_showEmergencyVehicleInMap;
+                    });
+                  },
+                  backgroundColor: Colors.blue,
+                  child: const Icon(Icons.map),
+                ),
+              ),
+        const SizedBox(width: 10),
+        Tooltip(
+          message: 'Track selected vehicle',
+          child: FloatingActionButton(
+            heroTag: 'Admin page track',
+            onPressed: () {
+              setState(() {
+                _trackSelectedVehicle = !_trackSelectedVehicle;
+              });
+            },
+            backgroundColor: _trackSelectedVehicle ? Colors.blue : Colors.white,
+            child: const Icon(Icons.gps_fixed),
+          ),
+        ),
+      ],
+    );
   }
 }

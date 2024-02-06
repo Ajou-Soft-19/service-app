@@ -1,4 +1,3 @@
-import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
@@ -22,12 +21,13 @@ Future<BitmapDescriptor> getBitmapDescriptorFromAssetBytes(
 }
 
 Future<BitmapDescriptor> getBitmapDescriptorFromAssetBytesWithRadius(
-    String path, double radius) async {
+    String path, double radius, bool isFocused) async {
   debugPrint('Radius: $radius');
   int width = 80 ~/ radius;
 
-  if (width < 20) width = 20;
-  if (width > 50) width = 50;
+  if (width < 10) width = 10;
+  if (width > 25) width = 25;
+  if (isFocused) width = (width * 1.3).toInt();
 
   final Uint8List imageData = await getBytesFromAsset(path, width);
   return BitmapDescriptor.fromBytes(imageData);

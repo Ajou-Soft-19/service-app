@@ -4,6 +4,7 @@ import 'package:am_app/model/api/dto/vehicle.dart';
 import 'package:am_app/model/api/vehicle_api.dart';
 import 'package:am_app/model/provider/user_provider.dart';
 import 'package:am_app/model/provider/vehicle_provider.dart';
+import 'package:am_app/screen/asset/app_bar.dart';
 import 'package:am_app/screen/asset/assets.dart';
 import 'package:am_app/screen/vehicle/register_vehicle_page.dart';
 import 'package:flutter/material.dart';
@@ -147,9 +148,9 @@ class _VehicleListPageState extends State<VehicleListPage> {
         Provider.of<VehicleProvider>(context);
     final UserProvider userProvider = Provider.of<UserProvider>(context);
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('차량 조회'),
-        backgroundColor: Colors.blue,
+      appBar: const CustomAppBar(
+        title: '차량 목록',
+        backButton: true,
       ),
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -166,54 +167,84 @@ class _VehicleListPageState extends State<VehicleListPage> {
                     ],
                   ),
                 )
-              : ListView.builder(
-                  itemCount: vehicles!.length + 1,
-                  itemBuilder: (context, index) {
-                    if (index < vehicles!.length) {
-                      final vehicle = vehicles![index];
-                      return Card(
-                        color: ifSelected(
-                                vehicle.vehicleId.toString(), vehicleProvider)
-                            ? Colors.blue.shade100
-                            : Colors.white,
-                        elevation: 5,
-                        margin: const EdgeInsets.all(10),
-                        child: ListTile(
-                          leading: const Icon(Icons.directions_car,
-                              color: Colors.blue, size: 40),
-                          title: Text(vehicle.licenseNumber,
-                              style: const TextStyle(
-                                  fontSize: 20, fontWeight: FontWeight.bold)),
-                          subtitle: Text(
-                              'Vehicle ID: ${vehicle.vehicleId}', // 디버깅용 나중에 vehicleType으로 변경
-                              style: const TextStyle(fontSize: 15)),
-                          onTap: () => onSelect(vehicle, vehicleProvider),
-                          trailing: IconButton(
-                            icon: const Icon(Icons.more_vert),
-                            onPressed: () => onMoreVertPressed(
-                                vehicle, vehicleProvider, userProvider),
-                          ),
-                        ),
-                      );
-                    } else {
-                      return Card(
-                        color: Colors.blue.shade50,
-                        elevation: 5,
-                        margin: const EdgeInsets.all(10),
-                        child: ListTile(
-                          leading: const Icon(Icons.add,
-                              color: Colors.blue, size: 40),
-                          title: const Text('차량 추가',
-                              style: TextStyle(
-                                  fontSize: 20, fontWeight: FontWeight.bold)),
-                          onTap: () {
-                            registerVehicle(userProvider);
-                          },
-                        ),
-                      );
-                    }
-                  },
+              : Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 600),
+                    child: ListView.builder(
+                      itemCount: vehicles!.length + 1,
+                      itemBuilder: (context, index) {
+                        if (index < vehicles!.length) {
+                          final vehicle = vehicles![index];
+                          return Card(
+                            color: ifSelected(vehicle.vehicleId.toString(),
+                                    vehicleProvider)
+                                ? Colors.blue.shade100
+                                : Colors.white,
+                            elevation: 5,
+                            margin: const EdgeInsets.all(10),
+                            child: ListTile(
+                              leading: Icon(
+                                  getIconBasedOnVehicleType(
+                                      vehicle.vehicleType),
+                                  color: Colors.blue,
+                                  size: 40),
+                              title: Text(vehicle.licenseNumber,
+                                  style: const TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold)),
+                              subtitle: Text(
+                                  'Vehicle ID: ${vehicle.vehicleId} | Type: ${vehicle.vehicleType}',
+                                  style: const TextStyle(fontSize: 15)),
+                              onTap: () => onSelect(vehicle, vehicleProvider),
+                              trailing: IconButton(
+                                icon: const Icon(Icons.more_vert),
+                                onPressed: () => onMoreVertPressed(
+                                    vehicle, vehicleProvider, userProvider),
+                              ),
+                            ),
+                          );
+                        } else {
+                          return Card(
+                            color: Colors.blue.shade50,
+                            elevation: 5,
+                            margin: const EdgeInsets.all(10),
+                            child: ListTile(
+                              leading: const Icon(Icons.add,
+                                  color: Colors.blue, size: 40),
+                              title: const Text('차량 추가',
+                                  style: TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold)),
+                              onTap: () {
+                                registerVehicle(userProvider);
+                              },
+                            ),
+                          );
+                        }
+                      },
+                    ),
+                  ),
                 ),
     );
+  }
+
+  IconData getIconBasedOnVehicleType(String vehicleType) {
+    switch (vehicleType) {
+      case 'LIGHTWEIGHT_CAR':
+      case 'SMALL_CAR':
+      case 'MEDIUM_CAR':
+      case 'LARGE_CAR':
+        return Icons.directions_car;
+      case 'LARGE_TRUCK':
+      case 'SPECIAL_TRUCK':
+        return Icons.local_shipping;
+      case 'AMBULANCE':
+        return Icons.local_hospital;
+      case 'FIRE_TRUCK_MEDIUM':
+      case 'FIRE_TRUCK_LARGE':
+        return Icons.local_fire_department;
+      default:
+        return Icons.directions_car;
+    }
   }
 }

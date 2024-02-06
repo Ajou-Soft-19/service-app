@@ -1,5 +1,6 @@
 import 'package:am_app/model/api/vehicle_api.dart';
 import 'package:am_app/model/provider/user_provider.dart';
+import 'package:am_app/screen/asset/app_bar.dart';
 import 'package:am_app/screen/asset/assets.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -60,27 +61,39 @@ class _RegisterVehiclePageState extends State<RegisterVehiclePage> {
       items: const [
         DropdownMenuItem(
           value: 'LIGHTWEIGHT_CAR',
-          child: Text('경차'),
+          child: Text('1종 경형자동차'),
         ),
         DropdownMenuItem(
           value: 'SMALL_CAR',
-          child: Text('소형 차'),
+          child: Text('1종 소형차'),
         ),
         DropdownMenuItem(
           value: 'MEDIUM_CAR',
-          child: Text('중형 차'),
+          child: Text('2종 중형차'),
         ),
         DropdownMenuItem(
           value: 'LARGE_CAR',
-          child: Text('대형 차'),
+          child: Text('3종 대형차'),
         ),
         DropdownMenuItem(
           value: 'LARGE_TRUCK',
-          child: Text('대형 트럭'),
+          child: Text('4종 대형화물차'),
         ),
         DropdownMenuItem(
           value: 'SPECIAL_TRUCK',
-          child: Text('특수 트럭'),
+          child: Text('5종 특수화물차'),
+        ),
+        DropdownMenuItem(
+          value: 'AMBULANCE',
+          child: Text('구급차'),
+        ),
+        DropdownMenuItem(
+          value: 'FIRE_TRUCK_MEDIUM',
+          child: Text('소방차 중형'),
+        ),
+        DropdownMenuItem(
+          value: 'FIRE_TRUCK_LARGE',
+          child: Text('소방차 대형'),
         ),
       ],
       onChanged: (value) {
@@ -118,61 +131,90 @@ class _RegisterVehiclePageState extends State<RegisterVehiclePage> {
   @override
   Widget build(BuildContext context) {
     final userProvider = Provider.of<UserProvider>(context);
-    double paddingSize = MediaQuery.of(context).size.height * 0.1;
-
+    final height = MediaQuery.of(context).size.height;
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('차량 정보 등록'),
+      appBar: const CustomAppBar(
+        title: '차량 정보 등록',
+        backButton: true,
       ),
-      body: Padding(
-        padding: EdgeInsets.only(top: paddingSize, left: 16.0, right: 16.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.start,
-            children: <Widget>[
-              const Icon(
-                Icons.directions_car,
-                size: 50,
-                color: Colors.blue,
-              ),
-              const SizedBox(height: 10),
-              buildCountryCodeDropdown(),
-              const SizedBox(height: 10),
-              buildVehicleTypeDropdown(),
-              const SizedBox(height: 10),
-              buildLicenseNumberField(),
-              const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: () async {
-                  if (_formKey.currentState!.validate()) {
-                    try {
-                      await vehicleApi.registerVehicle(_countryCode!,
-                          _licenseNumber, _vehicleType!, userProvider);
-                      Navigator.pop(context);
-                    } catch (e) {
-                      Assets().showErrorSnackBar(context, e.toString());
-                    }
-                  }
-                },
-                style: ElevatedButton.styleFrom(
-                  foregroundColor: Colors.white,
-                  backgroundColor: Colors.blue,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 50, vertical: 10),
+      body: Center(
+        child: SingleChildScrollView(
+          child: Padding(
+            padding:
+                EdgeInsets.only(left: 16.0, right: 16.0, bottom: height * 0.1),
+            child: Form(
+              key: _formKey,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 600),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: <Widget>[
+                    Icon(
+                      getIconBasedOnVehicleType(),
+                      size: 50,
+                      color: Colors.blue,
+                    ),
+                    const SizedBox(height: 10),
+                    buildCountryCodeDropdown(),
+                    const SizedBox(height: 10),
+                    buildVehicleTypeDropdown(),
+                    const SizedBox(height: 10),
+                    buildLicenseNumberField(),
+                    const SizedBox(height: 20),
+                    ElevatedButton(
+                      onPressed: () async {
+                        if (_formKey.currentState!.validate()) {
+                          try {
+                            await vehicleApi.registerVehicle(_countryCode!,
+                                _licenseNumber, _vehicleType!, userProvider);
+                            Navigator.pop(context);
+                          } catch (e) {
+                            Assets().showErrorSnackBar(context, e.toString());
+                          }
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        foregroundColor: Colors.white,
+                        backgroundColor: Colors.blue,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 50, vertical: 10),
+                      ),
+                      child: const Text(
+                        '차량 등록',
+                        style: TextStyle(fontSize: 18),
+                      ),
+                    ),
+                  ],
                 ),
-                child: const Text(
-                  '차량 등록',
-                  style: TextStyle(fontSize: 18),
-                ),
               ),
-            ],
+            ),
           ),
         ),
       ),
     );
+  }
+
+// 차량 타입에 따른 아이콘 반환 함수
+  IconData getIconBasedOnVehicleType() {
+    switch (_vehicleType) {
+      case "LIGHTWEIGHT_CAR":
+      case "SMALL_CAR":
+      case "MEDIUM_CAR":
+      case "LARGE_CAR":
+        return Icons.directions_car;
+      case "LARGE_TRUCK":
+      case "SPECIAL_TRUCK":
+        return Icons.directions_bus;
+      case "AMBULANCE":
+        return Icons.local_hospital;
+      case "FIRE_TRUCK_MEDIUM":
+      case "FIRE_TRUCK_LARGE":
+        return Icons.local_fire_department;
+      default:
+        return Icons.directions_car;
+    }
   }
 }

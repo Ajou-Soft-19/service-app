@@ -273,7 +273,7 @@ class _AuthManagePagStateState extends State<AuthManagePagState> {
     return AppBar(
       backgroundColor: Colors.indigo,
       title: const Text(
-        'Admin Monitoring Page',
+        'Admin Role Request List Page',
         style: TextStyle(
           color: Colors.white,
           fontWeight: FontWeight.bold,
