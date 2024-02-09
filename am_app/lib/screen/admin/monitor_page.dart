@@ -86,6 +86,7 @@ class _AdminPageState extends State<AdminPage> {
       await _fetchVehicleStatus(userProvider);
       await _loadEmergencyVehicles(userProvider);
       await _updateSelectedVehiclePathPoint(userProvider);
+      await _getSelectedWarnList(userProvider);
       setState(() {
         _getSucceed = true;
         _failureCount = 0;
@@ -192,24 +193,25 @@ class _AdminPageState extends State<AdminPage> {
     }
     if (navigationData == null) return;
     if (selectedVehicleStatus!.emergencyEventId == -1) return;
-    int currentPathPoint = await monitorApi.getEmergencyVehicleCurrentPath(
-        userProvider, selectedVehicleStatus!);
+    int currentCheckPoint =
+        await monitorApi.getEmergencyVehicleCurrentCheckPoint(
+            userProvider, selectedVehicleStatus!);
 
-    navigationData!.currentPathPoint = currentPathPoint;
+    navigationData!.currentCheckPoint = currentCheckPoint;
 
-    await _updateWranRecords(userProvider, currentPathPoint);
+    await _updateWranRecords(userProvider, currentCheckPoint);
     await drawCheckPoint();
   }
 
   Future<void> _updateWranRecords(
-      UserProvider userProvider, int currentPathPoint) async {
+      UserProvider userProvider, int currentCheckPoint) async {
     if (selectedVehicleStatus == null) return;
     if (selectedVehicleStatus!.emergencyEventId == -1) return;
     List<WarnRecord> warnList =
         await monitorApi.getWarnRecordsByEmergencyEventIdAndCheckPointIndx(
             userProvider,
             selectedVehicleStatus!.emergencyEventId,
-            currentPathPoint);
+            currentCheckPoint);
 
     for (WarnRecord warn in warnList) {
       for (String sessionId in warn.sessionIds) {
@@ -352,7 +354,7 @@ class _AdminPageState extends State<AdminPage> {
         Circle(
           circleId: CircleId(circleId),
           center: position,
-          radius: 500,
+          radius: 400,
           fillColor: Colors.blue.withOpacity(0.5),
           strokeWidth: 1,
           strokeColor: Colors.blue,

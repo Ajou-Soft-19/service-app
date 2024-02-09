@@ -11,6 +11,7 @@ class NavigationData {
   final double duration;
   final int pathPointSize;
   int currentPathPoint;
+  int currentCheckPoint;
   final List<PathPoint> pathPoint;
   final List<CheckPoint>? checkPoint;
   final bool emergencyPath;
@@ -26,6 +27,7 @@ class NavigationData {
     required this.duration,
     required this.pathPointSize,
     required this.currentPathPoint,
+    required this.currentCheckPoint,
     required this.pathPoint,
     this.checkPoint,
     required this.emergencyPath,
@@ -47,6 +49,7 @@ class NavigationData {
           : json['duration'],
       pathPointSize: json['pathPointSize'],
       currentPathPoint: json['currentPathPoint'],
+      currentCheckPoint: json['currentCheckPoint'],
       pathPoint: (json['pathPoint'] as List)
           .map((i) => PathPoint.fromJson(i))
           .toList(),
@@ -68,7 +71,7 @@ class NavigationData {
 
   CheckPoint? findNextCheckPoint() {
     for (CheckPoint cp in checkPoint!) {
-      if (cp.pointIndex >= currentPathPoint) {
+      if (cp.pointIndex == currentCheckPoint) {
         return cp;
       }
     }
