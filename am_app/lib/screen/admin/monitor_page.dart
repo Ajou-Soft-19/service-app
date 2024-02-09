@@ -354,7 +354,7 @@ class _AdminPageState extends State<AdminPage> {
         Circle(
           circleId: CircleId(circleId),
           center: position,
-          radius: 400,
+          radius: 500,
           fillColor: Colors.blue.withOpacity(0.5),
           strokeWidth: 1,
           strokeColor: Colors.blue,
