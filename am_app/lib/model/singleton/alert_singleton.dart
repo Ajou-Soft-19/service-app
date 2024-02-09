@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:am_app/screen/asset/assets.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
@@ -73,17 +74,13 @@ class AlertSingleton {
     LatLng currentPathPointLatLng = AlertSingleton().pathPoints![AlertSingleton().currentPathPoint!]!;
     LatLng myLatLng = LocationSingleton().currentLocLatLng;
     double distance = calculateDistance(myLatLng, currentPathPointLatLng);
-    if (distance >= 1000) {
+    if (distance <= 1000) {
       double bearing = calculateBearing(myLatLng, currentPathPointLatLng);
       print("각도: $bearing");
       Marker marker = Marker(
         markerId: const MarkerId('emergencyMarker'),
         position: currentPathPointLatLng,
         icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
-        infoWindow: InfoWindow(
-          title: 'Vehicle is coming',
-          snippet: 'Direction: $bearing degrees',
-        ),
       );
       return marker;
     }

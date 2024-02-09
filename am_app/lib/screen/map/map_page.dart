@@ -119,10 +119,13 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
           _markers.add(newMarker);
           LatLng currentPathPointLatLng =
               AlertSingleton().pathPoints![AlertSingleton().currentPathPoint!]!;
+          LatLng nextPathPointLatLng =
+          AlertSingleton().pathPoints![AlertSingleton().currentPathPoint!]!;
           LatLng myLatLng = LocationSingleton().currentLocLatLng;
           String direction = AlertSingleton().determineDirection(
               AlertSingleton()
-                  .calculateBearing(myLatLng, currentPathPointLatLng) - _currentHeading);
+                      .calculateBearing(myLatLng, currentPathPointLatLng) -
+                  _currentHeading);
           debugPrint("$direction");
           Alignment alignment;
           switch (direction) {
@@ -154,12 +157,12 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
               alignment = Alignment.center;
               break;
           }
-
+          Assets().showSnackBar(context, '$direction 방향에서 긴급 차량 접근중');
           showDialog(
             barrierColor: Colors.transparent,
             context: context,
             builder: (BuildContext context) {
-              Future.delayed(Duration(seconds: 3), () {
+              Future.delayed(Duration(seconds: 1), () {
                 Navigator.of(context).pop(true);
               });
               return Stack(
@@ -177,7 +180,6 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
               );
             },
           );
-
         }
       });
       // TODO: Send location data to the server
@@ -229,40 +231,33 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
     return Scaffold(
         appBar: AppBar(
           title: const Text('Ajou\'s Miracle'),
-          actions: <Widget>[
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: Center(
-                child: Text(
-                  '${_locationData.speed?.toStringAsFixed(2)} m/s',
-                  style: const TextStyle(fontSize: 20.0),
-                ),
-              ),
-            ),
-            IconButton(
-                onPressed: () {
-                  setState(() {
-                    _isUsingNavi = !_isUsingNavi;
-                    if (_isUsingNavi) {
-                      _startNavigation();
-                    } else {
-                      _stopNavigation();
-                    }
-                  });
-                },
-                icon: Icon(_isUsingNavi ? Icons.stop : Icons.navigation)),
-            IconButton(
-                onPressed: _moveCameraToCurrentLocation,
-                icon: const Icon(Icons.my_location))
-          ],
         ),
         body: Column(
           children: <Widget>[
-            SearchField(
-              onSubmitted: (value) async {
-                _placesResult = await _searchService.searchPlaces(value);
-                setState(() {});
-              },
+            Row(
+              children: [
+                Expanded(
+                  child: SearchField(
+                    onSubmitted: (value) async {
+                      _placesResult = await _searchService.searchPlaces(value);
+                      setState(() {});
+                    },
+                    label: '도착지',
+                  ),
+                ),
+                IconButton(
+                    onPressed: () {
+                      setState(() {
+                        _isUsingNavi = !_isUsingNavi;
+                        if (_isUsingNavi) {
+                          _startNavigation();
+                        } else {
+                          _stopNavigation();
+                        }
+                      });
+                    },
+                    icon: Icon(_isUsingNavi ? Icons.stop : Icons.navigation)),
+              ],
             ),
             _placesResult.isNotEmpty
                 ? Expanded(
@@ -303,15 +298,36 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
                   )
                 : Container(),
             Flexible(
-              child: CustomGoogleMap(
-                markers: _markers,
-                polylines: _polylines,
-                initialPosition:
-                    LatLng(_locationData.latitude!, _locationData.longitude!),
-                onMapCreated: (controller) {
-                  _controller = controller;
-                },
-              ),
+              child: Stack(children: [
+                CustomGoogleMap(
+                  markers: _markers,
+                  polylines: _polylines,
+                  initialPosition:
+                      LatLng(_locationData.latitude!, _locationData.longitude!),
+                  onMapCreated: (controller) {
+                    _controller = controller;
+                  },
+                ),
+                _isUsingNavi ? Positioned(
+                  right: 10,
+                  top: 10,
+                  child: Text(
+                    '${_locationData.speed?.toStringAsFixed(2)} m/s',
+                    style: const TextStyle(
+                      color: Colors.indigo,
+                      fontSize: 30,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  )
+                ) : Container(),
+                Positioned(
+                  left: 20,
+                  bottom:70,
+                  child: IconButton(
+                      onPressed: _moveCameraToCurrentLocation,
+                      icon: const Icon(Icons.my_location)),
+                )
+              ]),
             ),
           ],
         ));
