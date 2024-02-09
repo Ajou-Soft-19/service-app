@@ -50,50 +50,94 @@ class _TabPageState extends State<TabPage> with SingleTickerProviderStateMixin {
         physics: const NeverScrollableScrollPhysics(),
         controller: _tabController,
         children: [
-          userProvider.hasEmergencyRole() ?
-            const MapPage() :
-            const MapPage(),
+          userProvider.hasEmergencyRole() ? const MapPage() : const MapPage(),
           userProvider.username != null
               ? const UserInfoPage()
               : const LoginPage(),
         ],
       ),
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(80.0),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.withOpacity(0.5),
-              spreadRadius: 5,
-              blurRadius: 7,
-              offset: const Offset(0, 3),
-            ),
-          ],
-        ),
-        child: Container(
-          height: kToolbarHeight + 20,
-          decoration: BoxDecoration(
-            color: Colors.grey.shade200,
-            borderRadius: BorderRadius.circular(8.0),
-          ),
-          child: TabBar(
-            controller: _tabController,
-            indicator: BoxDecoration(
-                borderRadius: BorderRadius.circular(8.0),
-                color: Colors.blue.shade200),
-            labelColor: Colors.white,
-            unselectedLabelColor: Colors.black,
-            tabs: _tabs
-                .map((tab) => SizedBox(
-                      width: double.infinity,
-                      height: kToolbarHeight,
-                      child: tab,
-                    ))
-                .toList(),
-          ),
-        ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          showModalBottomSheet(
+              context: context,
+              builder: (BuildContext context) {
+                return Container(
+                  height: MediaQuery.of(context).size.height *
+                      0.07, // 모달의 높이를 조절할 수 있습니다.
+                  child: Column(
+                    children: <Widget>[
+                      TabBar(
+                        controller: _tabController,
+                        indicator: BoxDecoration(
+                            borderRadius: BorderRadius.circular(8.0),
+                            color: Colors.blue.shade200),
+                        labelColor: Colors.white,
+                        unselectedLabelColor: Colors.black,
+                        tabs: _tabs
+                            .map((tab) => SizedBox(
+                                  width: double.infinity,
+                                  height: kToolbarHeight,
+                                  child: tab,
+                                ))
+                            .toList(),
+                      ),
+                      // Expanded(
+                      //   child: TabBarView(
+                      //     controller: _tabController,
+                      //     children: [
+                      //       userProvider.hasEmergencyRole()
+                      //           ? const MapPage()
+                      //           : const MapPage(),
+                      //       userProvider.username != null
+                      //           ? const UserInfoPage()
+                      //           : const LoginPage(),
+                      //     ],
+                      //   ),
+                      // ),
+                    ],
+                  ),
+                );
+              });
+        },
+        child: Icon(Icons.settings),
       ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,
+      // bottomNavigationBar: Container(
+      //   decoration: BoxDecoration(
+      //     color: Colors.white,
+      //     borderRadius: BorderRadius.circular(80.0),
+      //     boxShadow: [
+      //       BoxShadow(
+      //         color: Colors.grey.withOpacity(0.5),
+      //         spreadRadius: 5,
+      //         blurRadius: 7,
+      //         offset: const Offset(0, 3),
+      //       ),
+      //     ],
+      //   ),
+      //   child: Container(
+      //     height: kToolbarHeight + 20,
+      //     decoration: BoxDecoration(
+      //       color: Colors.grey.shade200,
+      //       borderRadius: BorderRadius.circular(8.0),
+      //     ),
+      //     child: TabBar(
+      //       controller: _tabController,
+      //       indicator: BoxDecoration(
+      //           borderRadius: BorderRadius.circular(8.0),
+      //           color: Colors.blue.shade200),
+      //       labelColor: Colors.white,
+      //       unselectedLabelColor: Colors.black,
+      //       tabs: _tabs
+      //           .map((tab) => SizedBox(
+      //                 width: double.infinity,
+      //                 height: kToolbarHeight,
+      //                 child: tab,
+      //               ))
+      //           .toList(),
+      //     ),
+      //   ),
+      // ),
     );
   }
 }
