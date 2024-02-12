@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:am_app/model/api/dto/navigation_path.dart';
 import 'package:am_app/model/api/dto/vehicle_status.dart';
@@ -86,6 +87,8 @@ class _AdminPageState extends State<AdminPage> {
       await _fetchVehicleStatus(userProvider);
       await _loadEmergencyVehicles(userProvider);
       await _updateSelectedVehiclePathPoint(userProvider);
+      sleep(const Duration(milliseconds: 100));
+      await _getSelectedWarnList(userProvider);
       setState(() {
         _getSucceed = true;
         _failureCount = 0;
@@ -192,24 +195,25 @@ class _AdminPageState extends State<AdminPage> {
     }
     if (navigationData == null) return;
     if (selectedVehicleStatus!.emergencyEventId == -1) return;
-    int currentPathPoint = await monitorApi.getEmergencyVehicleCurrentPath(
-        userProvider, selectedVehicleStatus!);
+    int currentCheckPoint =
+        await monitorApi.getEmergencyVehicleCurrentCheckPoint(
+            userProvider, selectedVehicleStatus!);
 
-    navigationData!.currentPathPoint = currentPathPoint;
+    navigationData!.currentCheckPoint = currentCheckPoint;
 
-    await _updateWranRecords(userProvider, currentPathPoint);
+    await _updateWranRecords(userProvider, currentCheckPoint);
     await drawCheckPoint();
   }
 
   Future<void> _updateWranRecords(
-      UserProvider userProvider, int currentPathPoint) async {
+      UserProvider userProvider, int currentCheckPoint) async {
     if (selectedVehicleStatus == null) return;
     if (selectedVehicleStatus!.emergencyEventId == -1) return;
     List<WarnRecord> warnList =
         await monitorApi.getWarnRecordsByEmergencyEventIdAndCheckPointIndx(
             userProvider,
             selectedVehicleStatus!.emergencyEventId,
-            currentPathPoint);
+            currentCheckPoint);
 
     for (WarnRecord warn in warnList) {
       for (String sessionId in warn.sessionIds) {
@@ -344,7 +348,7 @@ class _AdminPageState extends State<AdminPage> {
     );
   }
 
-  void _addCircle(LatLng position) {
+  void _addCircle(LatLng position, double radius, Color color) {
     final circleId = 'circle_${_circles.length}';
 
     setState(() {
@@ -352,10 +356,10 @@ class _AdminPageState extends State<AdminPage> {
         Circle(
           circleId: CircleId(circleId),
           center: position,
-          radius: 500,
-          fillColor: Colors.blue.withOpacity(0.5),
+          radius: radius,
+          fillColor: color.withOpacity(0.5),
           strokeWidth: 1,
-          strokeColor: Colors.blue,
+          strokeColor: color,
         ),
       );
     });
@@ -437,7 +441,6 @@ class _AdminPageState extends State<AdminPage> {
       _polylines.add(newRoute);
     });
 
-    // find next checkpoint
     await drawCheckPoint();
   }
 
@@ -446,11 +449,21 @@ class _AdminPageState extends State<AdminPage> {
 
     if (nextCheckPoint == null) return;
 
-    setState(() {
-      _circles.clear();
-      _addCircle(LatLng(
-          nextCheckPoint.location.latitude, nextCheckPoint.location.longitude));
-    });
+    _circles.clear();
+    _addCircle(
+        LatLng(nextCheckPoint.location.latitude,
+            nextCheckPoint.location.longitude),
+        500,
+        Colors.blue);
+    if (selectedVehicleStatus != null) {
+      _addCircle(
+          LatLng(selectedVehicleStatus!.latitude,
+              selectedVehicleStatus!.longitude),
+          170,
+          Colors.red);
+    }
+
+    setState(() {});
   }
 
   @override

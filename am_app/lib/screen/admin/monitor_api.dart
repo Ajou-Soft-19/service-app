@@ -13,6 +13,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 
 class MonitorApi extends TokenApiUtils {
+  @override
   final serviceServerUrl = dotenv.env['SERVICE_SERVER_URL']!;
 
   Future<List<VehicleStatus>> getVehicleStatus(UserProvider userProvider,
@@ -49,7 +50,8 @@ class MonitorApi extends TokenApiUtils {
       UserProvider userProvider) async {
     await checkLoginStatus(userProvider);
     await checkAdminRole(userProvider);
-    final url = Uri.parse('$serviceServerUrl/api/admin/monit/vehicle-status/emergency/all');
+    final url = Uri.parse(
+        '$serviceServerUrl/api/admin/monit/vehicle-status/emergency/all');
 
     final response = await http
         .get(url, headers: await getHeaders(authRequired: true))
@@ -89,12 +91,12 @@ class MonitorApi extends TokenApiUtils {
     }
   }
 
-  Future<int> getEmergencyVehicleCurrentPath(
+  Future<int> getEmergencyVehicleCurrentCheckPoint(
       UserProvider userProvider, VehicleStatus vehicleStatus) async {
     await checkLoginStatus(userProvider);
     await checkAdminRole(userProvider);
     var url = Uri.parse(
-        '$serviceServerUrl/api/admin/monit/vehicle-status/emergency/currentPoint');
+        '$serviceServerUrl/api/admin/monit/vehicle-status/emergency/currentCheckPoint');
     var body = jsonEncode({'vehicleStatusId': vehicleStatus.vehicleStatusId});
 
     var response = await http.post(url,
@@ -103,7 +105,7 @@ class MonitorApi extends TokenApiUtils {
     if (response.statusCode == 200) {
       Map<String, dynamic> jsonResponse = jsonDecode(response.body);
 
-      int currentPath = jsonResponse['data']['currentPathPoint'];
+      int currentPath = jsonResponse['data']['currentCheckPoint'];
 
       return currentPath;
     } else {

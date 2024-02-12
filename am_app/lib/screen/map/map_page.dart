@@ -9,7 +9,7 @@ import 'package:am_app/model/singleton/location_singleton.dart';
 import 'package:am_app/screen/asset/assets.dart';
 import 'package:am_app/screen/image_resize.dart';
 import 'package:am_app/screen/map/search_field.dart';
-import 'package:am_app/screen/map/socket_service.dart';
+import 'package:am_app/screen/map/socket_connector.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_compass/flutter_compass.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -46,7 +46,7 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
   bool _isUsingNavi = false;
   double _currentHeading = 0.0;
 
-  final socketService = SocketService();
+  final socketService = SocketConnector();
 
   @override
   void initState() {
@@ -61,10 +61,9 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
   void _initSocketListener() async {
     final vehicleProvider =
         Provider.of<VehicleProvider>(context, listen: false);
-    final userProvider = Provider.of<UserProvider>(context, listen: false);
-    await socketService.initSocket(userProvider, vehicleProvider);
+    await socketService.initSocket();
     vehicleProvider.addListener(() {
-      socketService.initSocket(userProvider, vehicleProvider);
+      socketService.initSocket();
     });
     socketService.startSendingLocationData(_location);
   }
@@ -119,17 +118,14 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
           _markers.add(newMarker);
           LatLng currentPathPointLatLng =
               AlertSingleton().pathPoints![AlertSingleton().currentPathPoint!]!;
-          List<LatLng> emergencyPathList = AlertSingleton().pathPoints!.values.toList();
-          // LatLng nextPathPointLatLng =
-          AlertSingleton().pathPoints![AlertSingleton().currentPathPoint!+2]!;
-          Polyline newRoute = await _mapService.drawRouteRed(emergencyPathList);
-          _polylines.add(newRoute);
+          LatLng nextPathPointLatLng =
+              AlertSingleton().pathPoints![AlertSingleton().currentPathPoint!]!;
           LatLng myLatLng = LocationSingleton().currentLocLatLng;
           String direction = AlertSingleton().determineDirection(
               AlertSingleton()
                       .calculateBearing(myLatLng, currentPathPointLatLng) -
                   _currentHeading);
-          debugPrint("$direction");
+          debugPrint(direction);
           Alignment alignment;
           switch (direction) {
             case 'north':
@@ -165,7 +161,7 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
             barrierColor: Colors.transparent,
             context: context,
             builder: (BuildContext context) {
-              Future.delayed(Duration(seconds: 1), () {
+              Future.delayed(const Duration(seconds: 1), () {
                 Navigator.of(context).pop(true);
               });
               return Stack(
@@ -287,7 +283,7 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
                             });
                           },
                           trailing: IconButton(
-                            icon: Icon(Icons.check_circle),
+                            icon: const Icon(Icons.check_circle),
                             onPressed: () async {
                               await drawRoute(destination, context);
                               // 검색 결과를 비우고 UI를 업데이트합니다.
@@ -312,21 +308,22 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
                     _controller = controller;
                   },
                 ),
-                _isUsingNavi ? Positioned(
-                  right: 10,
-                  top: 10,
-                  child: Text(
-                    '${_locationData.speed?.toStringAsFixed(2)} m/s',
-                    style: const TextStyle(
-                      color: Colors.indigo,
-                      fontSize: 30,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  )
-                ) : Container(),
+                _isUsingNavi
+                    ? Positioned(
+                        right: 10,
+                        top: 10,
+                        child: Text(
+                          '${_locationData.speed?.toStringAsFixed(2)} m/s',
+                          style: const TextStyle(
+                            color: Colors.indigo,
+                            fontSize: 30,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ))
+                    : Container(),
                 Positioned(
                   left: 20,
-                  bottom:70,
+                  bottom: 70,
                   child: IconButton(
                       onPressed: _moveCameraToCurrentLocation,
                       icon: const Icon(Icons.my_location)),
