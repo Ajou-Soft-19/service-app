@@ -74,7 +74,7 @@ class AlertSingleton {
     LatLng currentPathPointLatLng = AlertSingleton().pathPoints![AlertSingleton().currentPathPoint!]!;
     LatLng myLatLng = LocationSingleton().currentLocLatLng;
     double distance = calculateDistance(myLatLng, currentPathPointLatLng);
-    if (distance <= 1000) {
+    if (distance >= 1000) {
       double bearing = calculateBearing(myLatLng, currentPathPointLatLng);
       print("각도: $bearing");
       Marker marker = Marker(

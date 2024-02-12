@@ -109,7 +109,7 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
     socketService.setUsingNavi(true);
     _locationSubscription =
         _location.onLocationChanged.listen((l.LocationData currentLocation) {
-      setState(() {
+      setState(() async {
         _locationData = currentLocation;
         _updateUserMarker();
         _moveCameraToCurrentLocation();
@@ -119,8 +119,11 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
           _markers.add(newMarker);
           LatLng currentPathPointLatLng =
               AlertSingleton().pathPoints![AlertSingleton().currentPathPoint!]!;
-          LatLng nextPathPointLatLng =
-          AlertSingleton().pathPoints![AlertSingleton().currentPathPoint!]!;
+          List<LatLng> emergencyPathList = AlertSingleton().pathPoints!.values.toList();
+          // LatLng nextPathPointLatLng =
+          AlertSingleton().pathPoints![AlertSingleton().currentPathPoint!+2]!;
+          Polyline newRoute = await _mapService.drawRouteRed(emergencyPathList);
+          _polylines.add(newRoute);
           LatLng myLatLng = LocationSingleton().currentLocLatLng;
           String direction = AlertSingleton().determineDirection(
               AlertSingleton()
@@ -260,7 +263,7 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
               ],
             ),
             _placesResult.isNotEmpty
-                ? Expanded(
+                ? Expanded(flex: 1,
                     child: ListView.builder(
                       itemCount: _placesResult.length,
                       itemBuilder: (context, index) {
@@ -298,6 +301,7 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
                   )
                 : Container(),
             Flexible(
+              flex: 3,
               child: Stack(children: [
                 CustomGoogleMap(
                   markers: _markers,
