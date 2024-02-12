@@ -146,4 +146,45 @@ class Assets {
       },
     );
   }
+
+  void showWhereEmergency(BuildContext context, Alignment alignment, String direction) {
+    OverlayEntry overlayEntry = OverlayEntry(builder: (context) => Stack(
+      children: [
+        Align(
+          alignment: alignment,
+          child: IgnorePointer(
+            ignoring: true,
+            child: Icon(
+              Icons.warning,
+              size: 50,
+              color: Colors.red
+            )
+          )
+        ),
+
+        Positioned(
+          bottom: 20.0,
+          child: IgnorePointer(
+            ignoring: true,
+            child: Container(
+              alignment: Alignment.center,
+              width:MediaQuery.of(context).size.width,
+              child: Text(
+                'Emergency Car From the $direction\nSlow Down and Move Aside!',
+                style: const TextStyle(
+                  color: Colors.red,
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold
+                ),
+              )
+            )
+          )
+        )
+      ],
+    ));
+    Overlay.of(context)!.insert(overlayEntry);
+
+    // 5초 후에 위젯 제거
+    Future.delayed(Duration(seconds: 3)).then((_) => overlayEntry.remove());
+  }
 }

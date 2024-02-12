@@ -33,6 +33,20 @@ class MapService {
     return routeLine;
   }
 
+  Future<Polyline> drawRouteRedbyId(List<LatLng> route, String id) async {
+    List<LatLng> routePoints =
+    route.map((point) => LatLng(point.latitude, point.longitude)).toList();
+
+    Polyline routeLine = Polyline(
+      polylineId: PolylineId(id),
+      visible: true,
+      points: routePoints,
+      width: 8,
+      color: Colors.red,
+    );
+    return routeLine;
+  }
+
   int ccw(Location a, Location b, Location c) {
     double op = a.longitude * b.latitude +
         b.longitude * c.latitude +

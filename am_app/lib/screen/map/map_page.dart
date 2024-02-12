@@ -108,84 +108,86 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
     socketService.setUsingNavi(true);
     _locationSubscription =
         _location.onLocationChanged.listen((l.LocationData currentLocation) {
-      setState(() async {
+      setState(() {
         _locationData = currentLocation;
         _updateUserMarker();
         _moveCameraToCurrentLocation();
-        // _markers.add(AlertSingleton().checkAndCreateMarker()!);
-        Marker? newMarker = AlertSingleton().checkAndCreateMarker();
-        if (newMarker != null) {
-          _markers.add(newMarker);
-          LatLng currentPathPointLatLng =
-              AlertSingleton().pathPoints![AlertSingleton().currentPathPoint!]!;
-          List<LatLng> emergencyPathList = AlertSingleton().pathPoints!.values.toList();
-          // LatLng nextPathPointLatLng =
-          AlertSingleton().pathPoints![AlertSingleton().currentPathPoint!+2]!;
-          Polyline newRoute = await _mapService.drawRouteRed(emergencyPathList);
-          _polylines.add(newRoute);
-
-          LatLng myLatLng = LocationSingleton().currentLocLatLng;
-          String direction = AlertSingleton().determineDirection(
-              AlertSingleton()
-                      .calculateBearing(myLatLng, currentPathPointLatLng) -
-                  _currentHeading);
-          debugPrint(direction);
-          Alignment alignment;
-          switch (direction) {
-            case 'north':
-              alignment = Alignment.topCenter;
-              break;
-            case 'north_east':
-              alignment = Alignment.topRight;
-              break;
-            case 'east':
-              alignment = Alignment.centerRight;
-              break;
-            case 'south_east':
-              alignment = Alignment.bottomRight;
-              break;
-            case 'south':
-              alignment = Alignment.bottomCenter;
-              break;
-            case 'south_west':
-              alignment = Alignment.bottomLeft;
-              break;
-            case 'west':
-              alignment = Alignment.centerLeft;
-              break;
-            case 'north_west':
-              alignment = Alignment.topLeft;
-              break;
-            default:
-              alignment = Alignment.center;
-              break;
-          }
-          Assets().showSnackBar(context, '$direction 방향에서 긴급 차량 접근중');
-          showDialog(
-            barrierColor: Colors.transparent,
-            context: context,
-            builder: (BuildContext context) {
-              Future.delayed(const Duration(seconds: 1), () {
-                Navigator.of(context).pop(true);
-              });
-              return Stack(
-                children: <Widget>[
-                  const SizedBox(),
-                  Align(
-                    alignment: alignment,
-                    child: const Icon(
-                      Icons.warning,
-                      size: 48,
-                      color: Colors.red,
-                    ),
-                  ),
-                ],
-              );
-            },
-          );
-        }
+        socketService.setDirection(_currentHeading);
       });
       // TODO: Send location data to the server
+    });
+    AlertSingleton().onVehicleDataUpdated.listen((licenseNumber) {
+      setState(() {
+        _controller!.animateCamera(
+          CameraUpdate.newCameraPosition(
+            CameraPosition(
+              target: LatLng(_locationData.latitude!, _locationData.longitude!),
+              zoom: 17.0,
+              bearing: _currentHeading,
+            ),
+          ),
+        );
+
+        if (AlertSingleton().markers.containsKey(licenseNumber)) {
+          _markers.removeWhere((marker) => marker.markerId.value == licenseNumber);
+          _markers.add(AlertSingleton().markers[licenseNumber]!);
+        }
+
+        // Polyline 추가
+        if (AlertSingleton().polylines.containsKey(licenseNumber)) {
+          _polylines.removeWhere((polyline) => polyline.polylineId.value == licenseNumber);
+          _polylines.add(AlertSingleton().polylines[licenseNumber]!);
+        }
+
+        // Marker와 Polyline 삭제
+        if (!AlertSingleton().markers.containsKey(licenseNumber)) {
+          _markers.removeWhere((marker) => marker.markerId.value == licenseNumber);
+        }
+        if (!AlertSingleton().polylines.containsKey(licenseNumber)) {
+          _polylines.removeWhere((polyline) => polyline.polylineId.value == licenseNumber);
+        }
+        LatLng? currentPathPointLatLng = AlertSingleton().markers[licenseNumber]?.position;
+        LatLng myLatLng = LocationSingleton().currentLocLatLng;
+        String direction = AlertSingleton().determineDirection(
+            AlertSingleton()
+                .calculateBearing(myLatLng, currentPathPointLatLng!) -
+                _currentHeading);
+        debugPrint(direction);
+        Alignment alignment;
+        switch (direction) {
+          case 'north':
+            alignment = Alignment.topCenter;
+            break;
+          case 'north_east':
+            alignment = Alignment.topRight;
+            break;
+          case 'east':
+            alignment = Alignment.centerRight;
+            break;
+          case 'south_east':
+            alignment = Alignment.bottomRight;
+            break;
+          case 'south':
+            alignment = Alignment.bottomCenter;
+            break;
+          case 'south_west':
+            alignment = Alignment.bottomLeft;
+            break;
+          case 'west':
+            alignment = Alignment.centerLeft;
+            break;
+          case 'north_west':
+            alignment = Alignment.topLeft;
+            break;
+          default:
+            alignment = Alignment.center;
+            break;
+        }
+        debugPrint(alignment.toString());
+        debugPrint(direction);
+        Assets().showWhereEmergency(context, alignment, direction);
+      });
+
     });
   }
 

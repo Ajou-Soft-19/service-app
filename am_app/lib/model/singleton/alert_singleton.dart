@@ -1,13 +1,25 @@
+import 'dart:async';
 import 'dart:math';
 
 import 'package:am_app/screen/asset/assets.dart';
+import 'package:am_app/screen/map/map_service.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
+import '../api/dto/alert_info.dart';
 import 'location_singleton.dart';
 
 class AlertSingleton {
   static final AlertSingleton _singleton = AlertSingleton._internal();
+
+  Map<String, Map<int, LatLng>> pathPoints = {}; // 차량 번호에 따른 경로 지점
+  Map<String, int> currentPathPoint = {}; // 차량 번호에 따른 현재 경로 인덱스
+  Map<String, Marker> markers = {}; // 차량 번호에 따른 마커
+  Map<String, Polyline> polylines = {}; // 차량 번호에 따른 폴리라인 (경로선)
+
+  final _controller = StreamController<String>.broadcast();
+
+  Stream<String> get onVehicleDataUpdated => _controller.stream;
 
   factory AlertSingleton() {
     return _singleton;
@@ -15,31 +27,50 @@ class AlertSingleton {
 
   AlertSingleton._internal();
 
-  final FlutterSecureStorage _storage = const FlutterSecureStorage();
-
-  String? _licenseNumber;
-  int? _currentPathPoint;
-  Map<int, LatLng>? _pathPoints;
-
-  String? get licenseNumber => _licenseNumber;
-  int? get currentPathPoint => _currentPathPoint;
-  Map<int, LatLng>? get pathPoints => _pathPoints;
-
-  void updateVehicleData(String licenseNumber, int currentPathPoint, Map<int, LatLng> pathPoints) {
-    _licenseNumber = licenseNumber;
-    _currentPathPoint = currentPathPoint;
-    _pathPoints = pathPoints;
+  Future<void> updateVehicleData(Map<String, dynamic> parsedJson) async {
+    Map<String, dynamic> data = parsedJson['data'];
+    EmergencyPathData emergencyPathData = EmergencyPathData.fromJson(data);
+    String licenseNumber = emergencyPathData.licenseNumber;
+    int currentPathPointData = emergencyPathData.currentPathPoint;
+    Map<int, LatLng> pathPointsData = emergencyPathData.pathPoints.map(
+             (index, point) => MapEntry(
+             index, LatLng(point.location.latitude, point.location.longitude)));
+    currentPathPoint[licenseNumber] = currentPathPointData;
+    pathPoints[licenseNumber] = pathPointsData;
+    markers[licenseNumber] = Marker(
+      markerId: MarkerId(licenseNumber),
+      position: pathPoints[licenseNumber]![currentPathPointData]!,
+    );
+    List<LatLng>? emergencyPathList = pathPoints[licenseNumber]?.values.toList();
+    polylines[licenseNumber] =  await MapService().drawRouteRedbyId(emergencyPathList!, licenseNumber);
+    _controller.sink.add(licenseNumber);
   }
 
-  Future<void> setLicenseNumber(String licenseNumber) async {
-    await _storage.write(key: 'licenseNumber', value: licenseNumber);
-    _licenseNumber = licenseNumber;
+  void updateVehicleDataByUpdateAlert(Map<String, dynamic> parsedJson){
+    Map<String, dynamic> data = parsedJson['data'];
+    String licenseNumber = data['licenseNumber'];
+    double lat = data['latitude'];
+    double lng = data['longitude'];
+
+    markers[licenseNumber] = Marker(
+      markerId: MarkerId(licenseNumber),
+      position: LatLng(lat, lng),
+    );
+    _controller.sink.add(licenseNumber);
   }
 
-  Future<bool> isExistingLicenseNumber(String licenseNumber) async {
-    String? storedLicenseNumber = await _storage.read(key: 'licenseNumber');
-    return storedLicenseNumber != null && storedLicenseNumber == licenseNumber;
+  void deleteVehicleData(Map<String, dynamic> parsedJson){
+    Map<String, dynamic> data = parsedJson['data'];
+    String licenseNumber = data['licenseNumber'];
+
+    pathPoints.remove(licenseNumber);
+    currentPathPoint.remove(licenseNumber);
+    markers.remove(licenseNumber);
+    polylines.remove(licenseNumber);
+
+    _controller.sink.add(licenseNumber);
   }
+
   double calculateDistance(LatLng point1, LatLng point2) {
     const double R = 6371e3; // metres
     var lat1 = point1.latitude * pi / 180; // φ, λ in radians
@@ -68,23 +99,6 @@ class AlertSingleton {
     bearing = (bearing + 360) % 360;
 
     return bearing;
-  }
-
-  Marker? checkAndCreateMarker() {
-    LatLng currentPathPointLatLng = AlertSingleton().pathPoints![AlertSingleton().currentPathPoint!]!;
-    LatLng myLatLng = LocationSingleton().currentLocLatLng;
-    double distance = calculateDistance(myLatLng, currentPathPointLatLng);
-    if (distance <= 1000) {
-      double bearing = calculateBearing(myLatLng, currentPathPointLatLng);
-      print("각도: $bearing");
-      Marker marker = Marker(
-        markerId: const MarkerId('emergencyMarker'),
-        position: currentPathPointLatLng,
-        icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
-      );
-      return marker;
-    }
-    return null;
   }
 
   String determineDirection(double bearing) {
