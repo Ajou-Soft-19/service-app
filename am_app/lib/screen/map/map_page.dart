@@ -118,8 +118,12 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
           _markers.add(newMarker);
           LatLng currentPathPointLatLng =
               AlertSingleton().pathPoints![AlertSingleton().currentPathPoint!]!;
-          LatLng nextPathPointLatLng =
-              AlertSingleton().pathPoints![AlertSingleton().currentPathPoint!]!;
+          List<LatLng> emergencyPathList = AlertSingleton().pathPoints!.values.toList();
+          // LatLng nextPathPointLatLng =
+          AlertSingleton().pathPoints![AlertSingleton().currentPathPoint!+2]!;
+          Polyline newRoute = await _mapService.drawRouteRed(emergencyPathList);
+          _polylines.add(newRoute);
+
           LatLng myLatLng = LocationSingleton().currentLocLatLng;
           String direction = AlertSingleton().determineDirection(
               AlertSingleton()
