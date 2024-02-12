@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:am_app/model/api/token_api_utils.dart';
-import 'package:am_app/screen/map/socket_message_handler.dart';
+import 'package:am_app/model/socket/socket_message_handler.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:web_socket_channel/io.dart';
