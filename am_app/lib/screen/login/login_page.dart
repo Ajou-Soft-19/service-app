@@ -28,7 +28,7 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: const CustomAppBar(title: "로그인", backButton: false),
+      appBar: const CustomAppBar(title: "로그인", backButton: true),
       body: Center(
         child: SingleChildScrollView(
           child: Column(

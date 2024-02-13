@@ -9,13 +9,9 @@ import 'package:am_app/model/api/dto/warn_record.dart';
 import 'package:am_app/model/api/exception/exception_message.dart';
 import 'package:am_app/model/api/token_api_utils.dart';
 import 'package:am_app/model/provider/user_provider.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 
 class MonitorApi extends TokenApiUtils {
-  @override
-  final serviceServerUrl = dotenv.env['SERVICE_SERVER_URL']!;
-
   Future<List<VehicleStatus>> getVehicleStatus(UserProvider userProvider,
       double latitude, double longitude, double radius) async {
     await checkLoginStatus(userProvider);

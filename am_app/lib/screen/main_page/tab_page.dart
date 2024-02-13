@@ -44,7 +44,7 @@ class _TabPageState extends State<TabPage> with SingleTickerProviderStateMixin {
   Widget build(BuildContext context) {
     final userProvider = context.watch<UserProvider>();
     return Scaffold(
-      resizeToAvoidBottomInset: true,
+      resizeToAvoidBottomInset: false,
       backgroundColor: Colors.white,
       body: TabBarView(
         physics: const NeverScrollableScrollPhysics(),
@@ -61,9 +61,7 @@ class _TabPageState extends State<TabPage> with SingleTickerProviderStateMixin {
           showModalBottomSheet(
               context: context,
               builder: (BuildContext context) {
-                return Container(
-                  height: MediaQuery.of(context).size.height *
-                      0.07, // 모달의 높이를 조절할 수 있습니다.
+                return SingleChildScrollView(
                   child: Column(
                     children: <Widget>[
                       TabBar(
@@ -81,63 +79,14 @@ class _TabPageState extends State<TabPage> with SingleTickerProviderStateMixin {
                                 ))
                             .toList(),
                       ),
-                      // Expanded(
-                      //   child: TabBarView(
-                      //     controller: _tabController,
-                      //     children: [
-                      //       userProvider.hasEmergencyRole()
-                      //           ? const MapPage()
-                      //           : const MapPage(),
-                      //       userProvider.username != null
-                      //           ? const UserInfoPage()
-                      //           : const LoginPage(),
-                      //     ],
-                      //   ),
-                      // ),
                     ],
                   ),
                 );
               });
         },
-        child: Icon(Icons.settings),
+        child: const Icon(Icons.settings),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,
-      // bottomNavigationBar: Container(
-      //   decoration: BoxDecoration(
-      //     color: Colors.white,
-      //     borderRadius: BorderRadius.circular(80.0),
-      //     boxShadow: [
-      //       BoxShadow(
-      //         color: Colors.grey.withOpacity(0.5),
-      //         spreadRadius: 5,
-      //         blurRadius: 7,
-      //         offset: const Offset(0, 3),
-      //       ),
-      //     ],
-      //   ),
-      //   child: Container(
-      //     height: kToolbarHeight + 20,
-      //     decoration: BoxDecoration(
-      //       color: Colors.grey.shade200,
-      //       borderRadius: BorderRadius.circular(8.0),
-      //     ),
-      //     child: TabBar(
-      //       controller: _tabController,
-      //       indicator: BoxDecoration(
-      //           borderRadius: BorderRadius.circular(8.0),
-      //           color: Colors.blue.shade200),
-      //       labelColor: Colors.white,
-      //       unselectedLabelColor: Colors.black,
-      //       tabs: _tabs
-      //           .map((tab) => SizedBox(
-      //                 width: double.infinity,
-      //                 height: kToolbarHeight,
-      //                 child: tab,
-      //               ))
-      //           .toList(),
-      //     ),
-      //   ),
-      // ),
     );
   }
 }

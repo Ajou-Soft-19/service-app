@@ -8,7 +8,8 @@ class CustomGoogleMap extends StatelessWidget {
   final LatLng initialPosition;
   final Function onMapCreated;
 
-  CustomGoogleMap({
+  const CustomGoogleMap({
+    super.key,
     required this.markers,
     required this.polylines,
     required this.initialPosition,
@@ -19,14 +20,13 @@ class CustomGoogleMap extends StatelessWidget {
   Widget build(BuildContext context) {
     return Stack(children: [
       GoogleMap(
-        compassEnabled: true,
+        compassEnabled: false,
         onMapCreated: (controller) => onMapCreated(controller),
-        initialCameraPosition: CameraPosition(
-          target: initialPosition,
-          zoom: 18.0,
-        ),
+        initialCameraPosition:
+            CameraPosition(target: initialPosition, zoom: 18.0, tilt: 30.0),
         polylines: polylines,
         markers: markers,
+        buildingsEnabled: false,
       ),
     ]);
   }

@@ -8,7 +8,6 @@ import 'package:am_app/screen/login/edit_user_info_page.dart';
 import 'package:am_app/screen/vehicle/vehicle_list_page.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:am_app/model/api/token_api_utils.dart';
 
 class UserInfoPage extends StatefulWidget {
   const UserInfoPage({Key? key}) : super(key: key);
@@ -77,7 +76,7 @@ class _UserInfoPageState extends State<UserInfoPage> {
       Assets().showErrorSnackBar(context, '권한 요청을 하지 않았습니다.');
       return;
     }
-    
+
     try {
       await LoginApi().checkRequestEmergencyRole(userProvider);
       userProvider.removeRequestedEmergencyRole();
