@@ -249,7 +249,6 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
 
   void _moveCameraToCurrentLocation() async {
     if (_isStickyButtonPressed == false || _isSearching) return;
-
     _controller!.animateCamera(
       CameraUpdate.newCameraPosition(
         CameraPosition(
