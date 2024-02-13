@@ -187,7 +187,9 @@ class Assets {
     ));
     Overlay.of(context)!.insert(overlayEntry);
 
+
     // 5초 후에 위젯 제거
-    Future.delayed(Duration(seconds: 3)).then((_) => overlayEntry.remove());
+    Future.delayed(const Duration(seconds: 3))
+        .then((_) => overlayEntry.remove());
   }
 }

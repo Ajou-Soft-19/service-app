@@ -108,7 +108,7 @@ class SocketConnector extends TokenApiUtils {
             'latitude': currentLocation.latitude,
             'isUsingNavi': _isUsingNavi,
             'meterPerSec': currentLocation.speed ?? 0.0,
-            'direction': _direction ?? 0.0,
+            'direction': _direction,
             'timestamp': DateTime.now().toUtc().toIso8601String(),
           },
         };
@@ -133,7 +133,7 @@ class SocketConnector extends TokenApiUtils {
     _isUsingNavi = isUsingNavi;
   }
 
-  void setDirection(double direction){
+  void setDirection(double direction) {
     _direction = direction;
   }
 
