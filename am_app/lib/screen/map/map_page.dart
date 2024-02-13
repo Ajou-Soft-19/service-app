@@ -34,7 +34,6 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
   l.PermissionStatus _permissionGranted = l.PermissionStatus.denied;
   l.LocationData _locationData =
       l.LocationData.fromMap({'latitude': 37.1234, 'longitude': 127.1234});
-  StreamSubscription<l.LocationData>? _locationSubscription;
 
   final _searchService = SearchService();
   final _apiService = ApiService();
@@ -90,8 +89,7 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
   }
 
   Future<void> attachUserMarkerChanger() {
-    _locationSubscription =
-        _location.onLocationChanged.listen((l.LocationData currentLocation) {
+    _location.onLocationChanged.listen((l.LocationData currentLocation) {
       setState(() {
         _locationData = currentLocation;
         _updateUserMarker();
@@ -128,7 +126,15 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
     _moveCameraToCurrentLocation();
   }
 
-  void _startNavigation() {
+  void _startNavigation(destination) async {
+    await drawRoute(destination, context);
+    setState(() {
+      _isSearching = false;
+      _isStickyButtonPressed = true;
+      _isUsingNavi = true;
+      _placesResult = [];
+    });
+    _moveCameraToCurrentLocation();
     socketService.setUsingNavi(true);
     AlertSingleton().onVehicleDataUpdated.listen((licenseNumber) {
       setState(() {
@@ -201,11 +207,13 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
     });
   }
 
-  void _stopNavigation() {
+  void _endNavigation() {
     _isUsingNavi = false;
     socketService.setUsingNavi(false);
     _markers.clear();
     _polylines.clear();
+    _searchController.clear();
+    setState(() {});
   }
 
   void _updateUserMarker() async {
@@ -266,7 +274,7 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!_isLoaded) {
         Assets().showLoadingDialog(context, "Loading...");
-      } else if (Navigator.of(context).canPop()) {
+      } else if (_isLoaded && Navigator.of(context).canPop()) {
         Navigator.of(context).pop();
       }
     });
@@ -276,7 +284,7 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
       body: Stack(
         children: <Widget>[
           buildGoogleMap(),
-          buildSearchRow(),
+          !_isUsingNavi ? buildSearchRow() : Container(),
           buildPlacesResults(),
         ],
       ),
@@ -421,11 +429,7 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
                           color: Colors.indigo,
                         ),
                         onPressed: () async {
-                          await drawRoute(destination, context);
-                          _isSearching = false;
-                          _startNavigation();
-                          _placesResult = [];
-                          setState(() {});
+                          _startNavigation(destination);
                         },
                       ),
                     ),
@@ -452,44 +456,68 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
           onMapCreated: (controller) {
             _controller = controller;
           },
-          onCameraMoveStarted: () {
-            setState(() {
-              _isStickyButtonPressed = false;
-            });
-          },
+          onCameraMoveStarted: () {},
+        ),
+        Positioned(
+          right: MediaQuery.of(context).size.width * 0.04,
+          top: MediaQuery.of(context).size.height * 0.2,
+          child: Text(
+            (_locationData.speed ?? 0 * 3.6).toStringAsFixed(0),
+            style: const TextStyle(
+              color: Colors.black,
+              fontSize: 60,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
         ),
         _isUsingNavi
             ? Positioned(
-                right: 10,
-                top: 10,
-                child: Text(
-                  '${_locationData.speed?.toStringAsFixed(2)} m/s',
-                  style: const TextStyle(
-                    color: Colors.indigo,
-                    fontSize: 30,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ))
+                left: 20,
+                bottom: 90,
+                child: FloatingActionButton(
+                    onPressed: () {
+                      showDialog(
+                        context: context,
+                        builder: (BuildContext context) {
+                          return AlertDialog(
+                            title: const Text('안내 종료'),
+                            content: const Text('안내를 종료하시겠습니까?'),
+                            actions: <Widget>[
+                              TextButton(
+                                child: const Text('아니요'),
+                                onPressed: () {
+                                  Navigator.of(context).pop();
+                                },
+                              ),
+                              TextButton(
+                                child: const Text('예'),
+                                onPressed: () {
+                                  _endNavigation();
+                                  Navigator.of(context).pop();
+                                },
+                              ),
+                            ],
+                          );
+                        },
+                      );
+                    },
+                    backgroundColor: Colors.red,
+                    child: const Icon(Icons.stop)),
+              )
             : Container(),
         Positioned(
           left: 20,
           bottom: 20,
-          child: Container(
-            padding: const EdgeInsets.all(8.0),
-            decoration: BoxDecoration(
-              color: _isStickyButtonPressed ? Colors.blue : Colors.white,
-              borderRadius: BorderRadius.circular(4.0),
-            ),
-            child: IconButton(
+          child: FloatingActionButton(
               onPressed: () {
                 _isStickyButtonPressed = !_isStickyButtonPressed;
                 _moveCameraToCurrentLocation();
                 setState(() {});
               },
-              icon: Icon(Icons.my_location,
-                  color: _isStickyButtonPressed ? Colors.white : Colors.black),
-            ),
-          ),
+              backgroundColor:
+                  _isStickyButtonPressed ? Colors.blue : Colors.white,
+              child: Icon(Icons.my_location,
+                  color: _isStickyButtonPressed ? Colors.white : Colors.black)),
         ),
       ]),
     );
