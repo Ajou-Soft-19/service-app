@@ -13,7 +13,7 @@ class MapService {
       polylineId: const PolylineId('route'),
       visible: true,
       points: routePoints,
-      width: 5,
+      width: 6,
       color: Colors.blue,
     );
     return routeLine;
@@ -35,7 +35,7 @@ class MapService {
 
   Future<Polyline> drawRouteRedbyId(List<LatLng> route, String id) async {
     List<LatLng> routePoints =
-    route.map((point) => LatLng(point.latitude, point.longitude)).toList();
+        route.map((point) => LatLng(point.latitude, point.longitude)).toList();
 
     Polyline routeLine = Polyline(
       polylineId: PolylineId(id),

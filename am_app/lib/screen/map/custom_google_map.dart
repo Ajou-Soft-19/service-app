@@ -29,6 +29,7 @@ class CustomGoogleMap extends StatelessWidget {
         markers: markers,
         onCameraMoveStarted: () => onCameraMoveStarted,
         buildingsEnabled: false,
+        zoomControlsEnabled: false,
       ),
     ]);
   }
