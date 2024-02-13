@@ -63,6 +63,7 @@ class SocketConnector extends TokenApiUtils {
       debugPrint("Received message: $messageType");
       switch (messageType) {
         case 'RESPONSE':
+          debugPrint(parsedJson.toString());
           _socketMessageHandler.handleResponseMessage(parsedJson);
           break;
         case 'ALERT':
