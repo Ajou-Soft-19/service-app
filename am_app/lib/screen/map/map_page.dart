@@ -64,7 +64,7 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
   void initListeners() async {
     await _getLocation();
     await _initSocketListener();
-    await _initCompassListener();
+    //await _initCompassListener();
     await attachUserMarkerChanger();
     await _initVehicleDataListener();
     setState(() {
@@ -101,6 +101,7 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
     );
     _location.onLocationChanged.listen((l.LocationData currentLocation) {
       setState(() {
+        _currentHeading = currentLocation.heading ?? 0;
         _locationData = currentLocation;
         _updateUserMarker();
         _moveCameraToCurrentLocation();
@@ -136,8 +137,7 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
     _moveCameraToCurrentLocation();
   }
 
-  Future<void> _initVehicleDataListener() async{
-
+  Future<void> _initVehicleDataListener() async {
     AlertSingleton().onVehicleDataUpdated.listen((licenseNumber) {
       setState(() {
         _isStickyButtonPressed = true;
@@ -152,7 +152,7 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
         // Polyline 추가
         if (AlertSingleton().polylines.containsKey(licenseNumber)) {
           _polylines.removeWhere(
-                  (polyline) => polyline.polylineId.value == licenseNumber);
+              (polyline) => polyline.polylineId.value == licenseNumber);
           _polylines.add(AlertSingleton().polylines[licenseNumber]!);
         }
 
@@ -163,14 +163,14 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
         }
         if (!AlertSingleton().polylines.containsKey(licenseNumber)) {
           _polylines.removeWhere(
-                  (polyline) => polyline.polylineId.value == licenseNumber);
+              (polyline) => polyline.polylineId.value == licenseNumber);
         }
         LatLng? currentPathPointLatLng =
             AlertSingleton().markers[licenseNumber]?.position;
-        if(currentPathPointLatLng == null) return;
-        LatLng myLatLng = LocationSingleton().currentLocLatLng!;
+        if (currentPathPointLatLng == null) return;
+        LatLng myLatLng = LocationSingleton().currentLocLatLng;
         String? direction = AlertSingleton().determineDirection(AlertSingleton()
-            .calculateBearing(myLatLng, currentPathPointLatLng!) -
+                .calculateBearing(myLatLng, currentPathPointLatLng) -
             _currentHeading);
         Alignment alignment;
         switch (direction) {
@@ -207,7 +207,8 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
         Assets().showWhereEmergency(context, alignment, direction);
       });
     });
-  return Future(() => null);}
+    return Future(() => null);
+  }
 
   void _startNavigation(destination) async {
     await drawRoute(destination, context);
