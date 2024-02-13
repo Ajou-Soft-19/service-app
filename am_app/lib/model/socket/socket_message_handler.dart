@@ -9,7 +9,12 @@ class SocketMessageHandler {
     AlertSingleton().updateVehicleData(parsedJson);
   }
 
-  void handleResponseMessage(Map<String, dynamic> parsedJson){}
+  void handleResponseMessage(Map<String, dynamic> parsedJson){
+    LocationSingleton().setMapMatchedLocation(parsedJson);
+    debugPrint(LocationSingleton().lat.toString());
+    debugPrint(LocationSingleton().lng.toString());
+    debugPrint(LocationSingleton().direction.toString());
+  }
 
   void handleAlertUpdateMessage(Map<String, dynamic> parsedJson) {
     AlertSingleton().updateVehicleDataByUpdateAlert(parsedJson);
