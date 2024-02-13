@@ -79,7 +79,6 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
     vehicleProvider.addListener(() {
       socketService.initSocket();
     });
-    socketService.startSendingLocationData(_location);
   }
 
   Future<void> _initCompassListener() {
@@ -102,7 +101,9 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
     _location.onLocationChanged.listen((l.LocationData currentLocation) {
       setState(() {
         _currentHeading = currentLocation.heading ?? 0;
+        if(_currentHeading!=0) socketService.setDirection(_currentHeading);
         _locationData = currentLocation;
+        socketService.sendLocationData(currentLocation);
         _updateUserMarker();
         _moveCameraToCurrentLocation();
       });
@@ -237,9 +238,10 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
 
     Marker userMarker = Marker(
       markerId: const MarkerId('user'),
-      position: LatLng(_locationData.latitude!, _locationData.longitude!),
+      position: LatLng(LocationSingleton().lat, LocationSingleton().lng),
+      // position: LatLng(_locationData.latitude!, _locationData.longitude!),
       // The rotation is the direction of travel
-      rotation: _currentHeading / 180 * pi,
+      // rotation: _currentHeading / 180 * pi,
       icon: customIcon,
     );
     setState(() {
@@ -255,7 +257,8 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
         CameraPosition(
             target: LatLng(_locationData.latitude!, _locationData.longitude!),
             zoom: 18.0,
-            bearing: _currentHeading,
+            bearing: LocationSingleton().direction,
+            // bearing: _currentHeading,
             tilt: 50.0),
       ),
     );
@@ -598,7 +601,7 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
         : '${remainingTimeMin ~/ 60} H ${remainingTimeMin % 60} M';
 
     String currentLocation =
-        '${navigationData.sourceLocation.latitude}, ${navigationData.sourceLocation.longitude}';
+        LocationSingleton().locationName;
     double screenWidth = MediaQuery.of(context).size.width;
     double containerWidth = screenWidth * 0.50;
 

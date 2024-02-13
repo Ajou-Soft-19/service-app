@@ -94,31 +94,24 @@ class SocketConnector extends TokenApiUtils {
     });
   }
 
-  void startSendingLocationData(Location location) {
-    _locationSubscription?.cancel();
-
-    _locationSubscription = Stream.periodic(const Duration(seconds: 2))
-        .asyncMap((_) => location.getLocation())
-        .where((currentLocation) => isConnected)
-        .listen((LocationData currentLocation) {
-      try {
-        final data = {
-          'requestType': 'UPDATE',
-          'data': {
-            'longitude': currentLocation.longitude,
-            'latitude': currentLocation.latitude,
-            'isUsingNavi': _isUsingNavi,
-            'meterPerSec': currentLocation.speed ?? 0.0,
-            'direction': _direction,
-            'timestamp': DateTime.now().toUtc().toIso8601String(),
-          },
-        };
-        debugPrint("Sending data: $data");
-        _channel.sink.add(jsonEncode(data));
-      } catch (e) {
-        debugPrint("Error sending data: $e");
-      }
-    });
+  void sendLocationData(LocationData currentLocation) {
+    try {
+      final data = {
+        'requestType': 'UPDATE',
+        'data': {
+          'longitude': currentLocation.longitude,
+          'latitude': currentLocation.latitude,
+          'isUsingNavi': _isUsingNavi,
+          'meterPerSec': currentLocation.speed ?? 0.0,
+          'direction': _direction,
+          'timestamp': DateTime.now().toUtc().toIso8601String(),
+        },
+      };
+      debugPrint("Sending data: $data");
+      _channel.sink.add(jsonEncode(data));
+    } catch (e) {
+      debugPrint("Error sending data: $e");
+    }
   }
 
   void close() {
