@@ -2,16 +2,13 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:am_app/model/api/dto/navigation_path.dart';
-import 'package:am_app/model/provider/user_provider.dart';
 import 'package:am_app/model/provider/vehicle_provider.dart';
 import 'package:am_app/model/singleton/alert_singleton.dart';
 import 'package:am_app/model/singleton/location_singleton.dart';
 import 'package:am_app/screen/asset/assets.dart';
 import 'package:am_app/screen/image_resize.dart';
 import 'package:am_app/model/socket/socket_connector.dart';
-import 'package:am_app/screen/login/login_page.dart';
 import 'package:am_app/screen/login/setting_page.dart';
-import 'package:am_app/screen/login/user_info_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_compass/flutter_compass.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -43,13 +40,15 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
   final _apiService = ApiService();
   final _mapService = MapService();
   final socketService = SocketConnector();
-  bool _isUsingNavi = false;
+  bool _isLoaded = false;
   bool _serviceEnabled = false;
+  bool _isUsingNavi = false;
   bool _isSearching = false;
+  bool _isStickyButtonPressed = true;
 
   final TextEditingController _searchController = TextEditingController();
-  double _currentHeading = 0.0;
   NavigationData? navigationData;
+  double _currentHeading = 0.0;
 
   List<p.PlacesSearchResult> _placesResult = [];
   final Set<Polyline> _polylines = {};
@@ -58,14 +57,20 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
   @override
   void initState() {
     super.initState();
-    _getLocation();
-    _initSocketListener();
-    FlutterCompass.events?.listen((CompassEvent event) {
-      _currentHeading = event.heading!;
+    initListeners();
+  }
+
+  void initListeners() async {
+    await _getLocation();
+    await _initSocketListener();
+    await _initCompassListener();
+    await attachUserMarkerChanger();
+    setState(() {
+      _isLoaded = true;
     });
   }
 
-  void _initSocketListener() async {
+  Future<void> _initSocketListener() async {
     final vehicleProvider =
         Provider.of<VehicleProvider>(context, listen: false);
     await socketService.initSocket();
@@ -75,13 +80,34 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
     socketService.startSendingLocationData(_location);
   }
 
+  Future<void> _initCompassListener() {
+    FlutterCompass.events?.listen((CompassEvent event) {
+      _currentHeading = event.heading!;
+      socketService.setDirection(_currentHeading);
+    });
+
+    return Future(() => null);
+  }
+
+  Future<void> attachUserMarkerChanger() {
+    _locationSubscription =
+        _location.onLocationChanged.listen((l.LocationData currentLocation) {
+      setState(() {
+        _locationData = currentLocation;
+        _updateUserMarker();
+        _moveCameraToCurrentLocation();
+      });
+    });
+    return Future(() => null);
+  }
+
   @override
   void dispose() {
     socketService.close();
     super.dispose();
   }
 
-  _getLocation() async {
+  Future<void> _getLocation() async {
     _serviceEnabled = await _location.serviceEnabled();
     if (!_serviceEnabled) {
       _serviceEnabled = await _location.requestService();
@@ -99,68 +125,44 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
     }
 
     _locationData = await _location.getLocation();
-    final initialCameraPosition = CameraPosition(
-        target: LatLng(_locationData.latitude!, _locationData.longitude!),
-        zoom: 18.0,
-        bearing: _currentHeading,
-        tilt: 30.0);
-
-    setState(() {
-      _controller!.moveCamera(CameraUpdate.newCameraPosition(
-        initialCameraPosition,
-      ));
-    });
+    _moveCameraToCurrentLocation();
   }
 
   void _startNavigation() {
-    _locationSubscription?.cancel(); // Cancel any previous subscription
     socketService.setUsingNavi(true);
-    _locationSubscription =
-        _location.onLocationChanged.listen((l.LocationData currentLocation) {
-      setState(() {
-        _locationData = currentLocation;
-        _updateUserMarker();
-        _moveCameraToCurrentLocation();
-        socketService.setDirection(_currentHeading);
-      });
-      // TODO: Send location data to the server
-    });
     AlertSingleton().onVehicleDataUpdated.listen((licenseNumber) {
       setState(() {
-        _controller!.animateCamera(
-          CameraUpdate.newCameraPosition(
-            CameraPosition(
-              target: LatLng(_locationData.latitude!, _locationData.longitude!),
-              zoom: 17.0,
-              bearing: _currentHeading,
-            ),
-          ),
-        );
+        _isStickyButtonPressed = true;
+        _moveCameraToCurrentLocation();
 
         if (AlertSingleton().markers.containsKey(licenseNumber)) {
-          _markers.removeWhere((marker) => marker.markerId.value == licenseNumber);
+          _markers
+              .removeWhere((marker) => marker.markerId.value == licenseNumber);
           _markers.add(AlertSingleton().markers[licenseNumber]!);
         }
 
         // Polyline 추가
         if (AlertSingleton().polylines.containsKey(licenseNumber)) {
-          _polylines.removeWhere((polyline) => polyline.polylineId.value == licenseNumber);
+          _polylines.removeWhere(
+              (polyline) => polyline.polylineId.value == licenseNumber);
           _polylines.add(AlertSingleton().polylines[licenseNumber]!);
         }
 
         // Marker와 Polyline 삭제
         if (!AlertSingleton().markers.containsKey(licenseNumber)) {
-          _markers.removeWhere((marker) => marker.markerId.value == licenseNumber);
+          _markers
+              .removeWhere((marker) => marker.markerId.value == licenseNumber);
         }
         if (!AlertSingleton().polylines.containsKey(licenseNumber)) {
-          _polylines.removeWhere((polyline) => polyline.polylineId.value == licenseNumber);
+          _polylines.removeWhere(
+              (polyline) => polyline.polylineId.value == licenseNumber);
         }
-        LatLng? currentPathPointLatLng = AlertSingleton().markers[licenseNumber]?.position;
+        LatLng? currentPathPointLatLng =
+            AlertSingleton().markers[licenseNumber]?.position;
         LatLng myLatLng = LocationSingleton().currentLocLatLng;
-        String direction = AlertSingleton().determineDirection(
-            AlertSingleton()
+        String direction = AlertSingleton().determineDirection(AlertSingleton()
                 .calculateBearing(myLatLng, currentPathPointLatLng!) -
-                _currentHeading);
+            _currentHeading);
         debugPrint(direction);
         Alignment alignment;
         switch (direction) {
@@ -196,14 +198,12 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
         debugPrint(direction);
         Assets().showWhereEmergency(context, alignment, direction);
       });
-
     });
   }
 
   void _stopNavigation() {
     _isUsingNavi = false;
     socketService.setUsingNavi(false);
-    _locationSubscription?.cancel();
     _markers.clear();
     _polylines.clear();
   }
@@ -222,18 +222,19 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
     setState(() {
       _markers.removeWhere((marker) => marker.markerId.value == 'user');
       _markers.add(userMarker);
-      // debugPrint("sending: ${_locationData.toString()}");
     });
   }
 
-  void _moveCameraToCurrentLocation() {
+  void _moveCameraToCurrentLocation() async {
+    if (_isStickyButtonPressed == false || _isSearching) return;
+
     _controller!.animateCamera(
       CameraUpdate.newCameraPosition(
         CameraPosition(
             target: LatLng(_locationData.latitude!, _locationData.longitude!),
             zoom: 18.0,
             bearing: _currentHeading,
-            tilt: 30.0),
+            tilt: 50.0),
       ),
     );
   }
@@ -261,6 +262,15 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
   @override
   Widget build(BuildContext context) {
     super.build(context);
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!_isLoaded) {
+        Assets().showLoadingDialog(context, "Loading...");
+      } else if (Navigator.of(context).canPop()) {
+        Navigator.of(context).pop();
+      }
+    });
+
     return Scaffold(
       resizeToAvoidBottomInset: false,
       body: Stack(
@@ -374,7 +384,6 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
                     blurRadius: 7,
                     offset: const Offset(0, 3),
                   ),
-
                 ],
               ),
               child: ListView.builder(
@@ -413,6 +422,8 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
                         ),
                         onPressed: () async {
                           await drawRoute(destination, context);
+                          _isSearching = false;
+                          _startNavigation();
                           _placesResult = [];
                           setState(() {});
                         },
@@ -441,6 +452,11 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
           onMapCreated: (controller) {
             _controller = controller;
           },
+          onCameraMoveStarted: () {
+            setState(() {
+              _isStickyButtonPressed = false;
+            });
+          },
         ),
         _isUsingNavi
             ? Positioned(
@@ -461,12 +477,18 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
           child: Container(
             padding: const EdgeInsets.all(8.0),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: _isStickyButtonPressed ? Colors.blue : Colors.white,
               borderRadius: BorderRadius.circular(4.0),
             ),
             child: IconButton(
-                onPressed: _moveCameraToCurrentLocation,
-                icon: const Icon(Icons.my_location)),
+              onPressed: () {
+                _isStickyButtonPressed = !_isStickyButtonPressed;
+                _moveCameraToCurrentLocation();
+                setState(() {});
+              },
+              icon: Icon(Icons.my_location,
+                  color: _isStickyButtonPressed ? Colors.white : Colors.black),
+            ),
           ),
         ),
       ]),

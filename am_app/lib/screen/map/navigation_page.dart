@@ -3,8 +3,7 @@ import 'dart:math';
 
 import 'package:am_app/model/api/dto/navigation_path.dart';
 import 'package:am_app/model/provider/vehicle_provider.dart';
-import 'package:am_app/model/singleton/alert_singleton.dart';
-import 'package:am_app/model/singleton/location_singleton.dart';
+
 import 'package:am_app/screen/asset/assets.dart';
 import 'package:am_app/screen/image_resize.dart';
 import 'package:am_app/model/socket/socket_connector.dart';
@@ -110,8 +109,7 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
         _locationData = currentLocation;
         _updateUserMarker();
         _moveCameraToCurrentLocation();
-        }
-      );
+      });
       // TODO: Send location data to the server
     });
   }
@@ -316,6 +314,7 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
           onMapCreated: (controller) {
             _controller = controller;
           },
+          onCameraMoveStarted: () {},
         ),
         _isUsingNavi
             ? Positioned(

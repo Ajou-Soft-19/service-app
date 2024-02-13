@@ -7,14 +7,15 @@ class CustomGoogleMap extends StatelessWidget {
   final Set<Polyline> polylines;
   final LatLng initialPosition;
   final Function onMapCreated;
+  final Function onCameraMoveStarted;
 
-  const CustomGoogleMap({
-    super.key,
-    required this.markers,
-    required this.polylines,
-    required this.initialPosition,
-    required this.onMapCreated,
-  });
+  const CustomGoogleMap(
+      {super.key,
+      required this.markers,
+      required this.polylines,
+      required this.initialPosition,
+      required this.onMapCreated,
+      required this.onCameraMoveStarted});
 
   @override
   Widget build(BuildContext context) {
@@ -26,6 +27,7 @@ class CustomGoogleMap extends StatelessWidget {
             CameraPosition(target: initialPosition, zoom: 18.0, tilt: 30.0),
         polylines: polylines,
         markers: markers,
+        onCameraMoveStarted: () => onCameraMoveStarted,
         buildingsEnabled: false,
       ),
     ]);
