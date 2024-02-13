@@ -110,75 +110,8 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
         _locationData = currentLocation;
         _updateUserMarker();
         _moveCameraToCurrentLocation();
-        // _markers.add(AlertSingleton().checkAndCreateMarker()!);
-        Marker? newMarker = AlertSingleton().checkAndCreateMarker();
-        if (newMarker != null) {
-          _markers.add(newMarker);
-          LatLng currentPathPointLatLng =
-              AlertSingleton().pathPoints![AlertSingleton().currentPathPoint!]!;
-          LatLng nextPathPointLatLng =
-              AlertSingleton().pathPoints![AlertSingleton().currentPathPoint!]!;
-          LatLng myLatLng = LocationSingleton().currentLocLatLng;
-          String direction = AlertSingleton().determineDirection(
-              AlertSingleton()
-                      .calculateBearing(myLatLng, currentPathPointLatLng) -
-                  _currentHeading);
-          debugPrint(direction);
-          Alignment alignment;
-          switch (direction) {
-            case 'north':
-              alignment = Alignment.topCenter;
-              break;
-            case 'north_east':
-              alignment = Alignment.topRight;
-              break;
-            case 'east':
-              alignment = Alignment.centerRight;
-              break;
-            case 'south_east':
-              alignment = Alignment.bottomRight;
-              break;
-            case 'south':
-              alignment = Alignment.bottomCenter;
-              break;
-            case 'south_west':
-              alignment = Alignment.bottomLeft;
-              break;
-            case 'west':
-              alignment = Alignment.centerLeft;
-              break;
-            case 'north_west':
-              alignment = Alignment.topLeft;
-              break;
-            default:
-              alignment = Alignment.center;
-              break;
-          }
-          Assets().showSnackBar(context, '$direction 방향에서 긴급 차량 접근중');
-          showDialog(
-            barrierColor: Colors.transparent,
-            context: context,
-            builder: (BuildContext context) {
-              Future.delayed(const Duration(seconds: 1), () {
-                Navigator.of(context).pop(true);
-              });
-              return Stack(
-                children: <Widget>[
-                  const SizedBox(),
-                  Align(
-                    alignment: alignment,
-                    child: const Icon(
-                      Icons.warning,
-                      size: 48,
-                      color: Colors.red,
-                    ),
-                  ),
-                ],
-              );
-            },
-          );
         }
-      });
+      );
       // TODO: Send location data to the server
     });
   }

@@ -16,6 +16,7 @@ class SocketConnector extends TokenApiUtils {
   bool _isUsingNavi = false;
   bool _isConnected = false;
   bool _isClosing = false;
+  double _direction = 0.0;
 
   final jsonDecoder = StreamTransformer<String, dynamic>.fromHandlers(
     handleData: (String data, EventSink<dynamic> sink) {
@@ -95,7 +96,7 @@ class SocketConnector extends TokenApiUtils {
   void startSendingLocationData(Location location) {
     _locationSubscription?.cancel();
 
-    _locationSubscription = Stream.periodic(const Duration(seconds: 5))
+    _locationSubscription = Stream.periodic(const Duration(seconds: 2))
         .asyncMap((_) => location.getLocation())
         .where((currentLocation) => isConnected)
         .listen((LocationData currentLocation) {
@@ -107,7 +108,7 @@ class SocketConnector extends TokenApiUtils {
             'latitude': currentLocation.latitude,
             'isUsingNavi': _isUsingNavi,
             'meterPerSec': currentLocation.speed ?? 0.0,
-            'direction': currentLocation.heading ?? 0.0,
+            'direction': _direction ?? 0.0,
             'timestamp': DateTime.now().toUtc().toIso8601String(),
           },
         };
@@ -130,6 +131,10 @@ class SocketConnector extends TokenApiUtils {
 
   void setUsingNavi(bool isUsingNavi) {
     _isUsingNavi = isUsingNavi;
+  }
+
+  void setDirection(double direction){
+    _direction = direction;
   }
 
   bool get isConnected => _isConnected;
