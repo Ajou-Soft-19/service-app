@@ -150,16 +150,19 @@ class Assets {
   void showWhereEmergency(BuildContext context, Alignment alignment, String direction) {
     OverlayEntry overlayEntry = OverlayEntry(builder: (context) => Stack(
       children: [
-        Align(
-          alignment: alignment,
-          child: IgnorePointer(
-            ignoring: true,
-            child: Icon(
-              Icons.warning,
-              size: 50,
-              color: Colors.red
+        Padding(
+          padding: const EdgeInsets.all(100),
+          child: Align(
+            alignment: alignment,
+            child: const IgnorePointer(
+              ignoring: true,
+              child: Icon(
+                Icons.warning,
+                size: 100,
+                color: Colors.red
+              )
             )
-          )
+          ),
         ),
 
         Positioned(
