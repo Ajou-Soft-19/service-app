@@ -42,39 +42,17 @@ class MainPageState extends State<MainPage> {
 
   @override
   Widget build(BuildContext context) {
-    return PopScope(
-      canPop: false,
-      onPopInvoked: (bool didPop) async {
-        if (didPop) {
-          return;
-        }
-        final now = DateTime.now();
-        if (lastPressed == null ||
-            now.difference(lastPressed!) > const Duration(seconds: 2)) {
-          lastPressed = now;
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              backgroundColor: Colors.red.shade400,
-              content: const Text('정말 앱을 종료하시겠습니까? 뒤로 버튼을 한 번 더 누르면 종료됩니다.'),
-              duration: const Duration(seconds: 2),
-            ),
-          );
-          return;
-        }
-        SystemNavigator.pop();
-      },
-      child: Scaffold(
-        body: Consumer<UserProvider>(
-          builder: (context, userProvider, child) {
-            if (!userProvider.isLoaded) {
-              return const Center(
-                child: CircularProgressIndicator(),
-              );
-            } else {
-              return const MapPage();
-            }
-          },
-        ),
+    return Scaffold(
+      body: Consumer<UserProvider>(
+        builder: (context, userProvider, child) {
+          if (!userProvider.isLoaded) {
+            return const Center(
+              child: CircularProgressIndicator(),
+            );
+          } else {
+            return const MapPage();
+          }
+        },
       ),
     );
   }

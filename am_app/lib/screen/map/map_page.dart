@@ -10,6 +10,7 @@ import 'package:am_app/screen/image_resize.dart';
 import 'package:am_app/model/socket/socket_connector.dart';
 import 'package:am_app/screen/login/setting_page.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_compass/flutter_compass.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:location/location.dart' as l;
@@ -40,6 +41,7 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
   final _mapService = MapService();
   final socketService = SocketConnector();
   bool _isLoaded = false;
+  DateTime? lastPressed;
   bool _serviceEnabled = false;
   bool _isUsingNavi = false;
   bool _isSearching = false;
@@ -93,6 +95,10 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
   }
 
   Future<void> attachUserMarkerChanger() {
+    _location.changeSettings(
+      accuracy: l.LocationAccuracy.high,
+      interval: 1500,
+    );
     _location.onLocationChanged.listen((l.LocationData currentLocation) {
       setState(() {
         _locationData = currentLocation;
@@ -275,37 +281,74 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
     });
   }
 
+// WidgetsBinding.instance.addPostFrameCallback((_) {
+  //   if (!_isLoaded) {
+  //     Assets().showLoadingDialog(context, "Loading...");
+  //   } else if (_isLoaded && Navigator.of(context).canPop()) {
+  //     Navigator.of(context).pop();
+  //   }
+  // });
+
   @override
   Widget build(BuildContext context) {
     super.build(context);
 
-    // WidgetsBinding.instance.addPostFrameCallback((_) {
-    //   if (!_isLoaded) {
-    //     Assets().showLoadingDialog(context, "Loading...");
-    //   } else if (_isLoaded && Navigator.of(context).canPop()) {
-    //     Navigator.of(context).pop();
-    //   }
-    // });
+    return PopScope(
+      canPop: false,
+      onPopInvoked: (bool didPop) async {
+        if (didPop) {
+          return;
+        }
 
-    return Scaffold(
-      resizeToAvoidBottomInset: false,
-      body: Stack(
-        children: <Widget>[
-          buildGoogleMap(),
-          !_isUsingNavi ? buildSearchRow() : Container(),
-          buildPlacesResults(),
-        ],
+        if (_isUsingNavi) {
+          showEndNavigationConfirm();
+          return;
+        }
+
+        final now = DateTime.now();
+        if (lastPressed == null ||
+            now.difference(lastPressed!) > const Duration(seconds: 2)) {
+          lastPressed = now;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              backgroundColor: Colors.red.shade400,
+              content: const Text(
+                  'Are you sure you want to exit the app? Press the Back button once more to exit.'),
+              duration: const Duration(seconds: 2),
+            ),
+          );
+          return;
+        }
+        SystemNavigator.pop();
+      },
+      child: Scaffold(
+        resizeToAvoidBottomInset: false,
+        body: Stack(
+          children: <Widget>[
+            buildGoogleMap(),
+            !_isUsingNavi ? buildSearchRow() : Container(),
+            buildPlacesResults(),
+            _isUsingNavi ? buildNavigationInfo(navigationData!) : Container(),
+          ],
+        ),
       ),
     );
   }
 
   Widget buildSearchRow() {
-    var height = MediaQuery.of(context).size.height;
+    double screenWidth = MediaQuery.of(context).size.width;
+    double containerWidth = screenWidth * 0.9;
+
+    if (screenWidth > 600) {
+      containerWidth = 540;
+    }
+
     return Positioned(
-      top: height * 0.025,
-      left: 20.0,
-      right: 10.0,
+      top: MediaQuery.of(context).size.height * 0.025,
+      left: (screenWidth - containerWidth) / 2,
+      right: (screenWidth - containerWidth) / 2,
       child: Container(
+        width: containerWidth,
         decoration: BoxDecoration(
           color: Colors.transparent,
           borderRadius: BorderRadius.circular(20.0),
@@ -383,13 +426,21 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
   }
 
   Widget buildPlacesResults() {
+    double screenWidth = MediaQuery.of(context).size.width;
+    double containerWidth = screenWidth * 0.9;
+
+    if (screenWidth > 600) {
+      containerWidth = 540;
+    }
+
     return _placesResult.isNotEmpty
         ? Positioned(
             top: MediaQuery.of(context).size.height * 0.6,
-            left: 20.0,
-            right: 20.0,
+            left: (screenWidth - containerWidth) / 2,
+            right: (screenWidth - containerWidth) / 2,
             bottom: 20.0,
             child: Container(
+              width: containerWidth,
               decoration: BoxDecoration(
                 color: Colors.transparent,
                 borderRadius: BorderRadius.circular(20.0),
@@ -484,30 +535,7 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
                 bottom: 90,
                 child: FloatingActionButton(
                     onPressed: () {
-                      showDialog(
-                        context: context,
-                        builder: (BuildContext context) {
-                          return AlertDialog(
-                            title: const Text('안내 종료'),
-                            content: const Text('안내를 종료하시겠습니까?'),
-                            actions: <Widget>[
-                              TextButton(
-                                child: const Text('아니요'),
-                                onPressed: () {
-                                  Navigator.of(context).pop();
-                                },
-                              ),
-                              TextButton(
-                                child: const Text('예'),
-                                onPressed: () {
-                                  _endNavigation();
-                                  Navigator.of(context).pop();
-                                },
-                              ),
-                            ],
-                          );
-                        },
-                      );
+                      showEndNavigationConfirm();
                     },
                     backgroundColor: Colors.red,
                     child: const Icon(Icons.stop)),
@@ -528,6 +556,129 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
                   color: _isStickyButtonPressed ? Colors.white : Colors.black)),
         ),
       ]),
+    );
+  }
+
+  void showEndNavigationConfirm() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Stop Navigation'),
+          content: const Text('Are you sure you want to stop navigation?'),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('No'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: const Text('Confirm'),
+              onPressed: () {
+                _endNavigation();
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget buildNavigationInfo(NavigationData navigationData) {
+    double remainingDistanceKm = navigationData.distance / 1000;
+    String remainingDistanceDisplay = remainingDistanceKm < 1
+        ? '${(remainingDistanceKm * 1000).round()} m'
+        : '${remainingDistanceKm.toStringAsFixed(0)} km';
+
+    int remainingTimeMin = (navigationData.duration / 60).round();
+    String remainingTimeDisplay = remainingTimeMin < 60
+        ? '$remainingTimeMin M'
+        : '${remainingTimeMin ~/ 60} H ${remainingTimeMin % 60} M';
+
+    String currentLocation =
+        '${navigationData.sourceLocation.latitude}, ${navigationData.sourceLocation.longitude}';
+    double screenWidth = MediaQuery.of(context).size.width;
+    double containerWidth = screenWidth * 0.50;
+
+    if (screenWidth > 600) {
+      containerWidth = 300;
+    }
+
+    return Positioned(
+      left: (screenWidth - containerWidth) / 2,
+      right: (screenWidth - containerWidth) / 2,
+      bottom: 0,
+      child: Container(
+        width: containerWidth,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(1),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        margin: const EdgeInsets.only(bottom: 16.0),
+        child: Column(
+          children: <Widget>[
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
+                Flexible(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: <Widget>[
+                      const Icon(Icons.location_on, color: Colors.red),
+                      Flexible(
+                        child: Text(
+                          currentLocation,
+                          style: const TextStyle(
+                            color: Colors.black,
+                            fontSize: 19,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
+                Flexible(
+                  child: Text(
+                    remainingTimeDisplay,
+                    style: const TextStyle(
+                      color: Colors.black,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Flexible(
+                  child: Text(
+                    remainingDistanceDisplay,
+                    style: const TextStyle(
+                      color: Colors.black,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
     );
   }
 
