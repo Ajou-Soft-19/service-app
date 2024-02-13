@@ -64,6 +64,7 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
     await _initSocketListener();
     await _initCompassListener();
     await attachUserMarkerChanger();
+    await _initVehicleDataListener();
     setState(() {
       _isLoaded = true;
     });
@@ -82,6 +83,9 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
   Future<void> _initCompassListener() {
     FlutterCompass.events?.listen((CompassEvent event) {
       _currentHeading = event.heading!;
+      if (_currentHeading < 0) {
+        _currentHeading += 360;
+      }
       socketService.setDirection(_currentHeading);
     });
 
@@ -126,16 +130,8 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
     _moveCameraToCurrentLocation();
   }
 
-  void _startNavigation(destination) async {
-    await drawRoute(destination, context);
-    setState(() {
-      _isSearching = false;
-      _isStickyButtonPressed = true;
-      _isUsingNavi = true;
-      _placesResult = [];
-    });
-    _moveCameraToCurrentLocation();
-    socketService.setUsingNavi(true);
+  Future<void> _initVehicleDataListener() async{
+
     AlertSingleton().onVehicleDataUpdated.listen((licenseNumber) {
       setState(() {
         _isStickyButtonPressed = true;
@@ -150,7 +146,7 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
         // Polyline 추가
         if (AlertSingleton().polylines.containsKey(licenseNumber)) {
           _polylines.removeWhere(
-              (polyline) => polyline.polylineId.value == licenseNumber);
+                  (polyline) => polyline.polylineId.value == licenseNumber);
           _polylines.add(AlertSingleton().polylines[licenseNumber]!);
         }
 
@@ -161,15 +157,15 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
         }
         if (!AlertSingleton().polylines.containsKey(licenseNumber)) {
           _polylines.removeWhere(
-              (polyline) => polyline.polylineId.value == licenseNumber);
+                  (polyline) => polyline.polylineId.value == licenseNumber);
         }
         LatLng? currentPathPointLatLng =
             AlertSingleton().markers[licenseNumber]?.position;
-        LatLng myLatLng = LocationSingleton().currentLocLatLng;
-        String direction = AlertSingleton().determineDirection(AlertSingleton()
-                .calculateBearing(myLatLng, currentPathPointLatLng!) -
+        if(currentPathPointLatLng == null) return;
+        LatLng myLatLng = LocationSingleton().currentLocLatLng!;
+        String? direction = AlertSingleton().determineDirection(AlertSingleton()
+            .calculateBearing(myLatLng, currentPathPointLatLng!) -
             _currentHeading);
-        debugPrint(direction);
         Alignment alignment;
         switch (direction) {
           case 'north':
@@ -205,6 +201,18 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
         Assets().showWhereEmergency(context, alignment, direction);
       });
     });
+  return Future(() => null);}
+
+  void _startNavigation(destination) async {
+    await drawRoute(destination, context);
+    setState(() {
+      _isSearching = false;
+      _isStickyButtonPressed = true;
+      _isUsingNavi = true;
+      _placesResult = [];
+    });
+    _moveCameraToCurrentLocation();
+    socketService.setUsingNavi(true);
   }
 
   void _endNavigation() {
@@ -271,13 +279,13 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
   Widget build(BuildContext context) {
     super.build(context);
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!_isLoaded) {
-        Assets().showLoadingDialog(context, "Loading...");
-      } else if (_isLoaded && Navigator.of(context).canPop()) {
-        Navigator.of(context).pop();
-      }
-    });
+    // WidgetsBinding.instance.addPostFrameCallback((_) {
+    //   if (!_isLoaded) {
+    //     Assets().showLoadingDialog(context, "Loading...");
+    //   } else if (_isLoaded && Navigator.of(context).canPop()) {
+    //     Navigator.of(context).pop();
+    //   }
+    // });
 
     return Scaffold(
       resizeToAvoidBottomInset: false,
