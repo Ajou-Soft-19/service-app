@@ -6,6 +6,7 @@ import 'package:am_app/model/provider/vehicle_provider.dart';
 import 'package:am_app/model/singleton/alert_singleton.dart';
 import 'package:am_app/model/singleton/location_singleton.dart';
 import 'package:am_app/screen/asset/assets.dart';
+import 'package:am_app/screen/asset/compass_util.dart';
 import 'package:am_app/screen/image_resize.dart';
 import 'package:am_app/model/socket/socket_connector.dart';
 import 'package:am_app/screen/login/setting_page.dart';
@@ -16,6 +17,8 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:location/location.dart' as l;
 import 'package:google_maps_webservice/places.dart' as p;
 import 'package:provider/provider.dart';
+import 'package:smooth_compass/utils/smooth_compass.dart';
+import 'package:smooth_compass/utils/src/compass_ui.dart';
 import 'custom_google_map.dart';
 import 'search_service.dart';
 import '../../model/api/navigation_api.dart';
@@ -35,11 +38,14 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
   l.PermissionStatus _permissionGranted = l.PermissionStatus.denied;
   l.LocationData _locationData =
       l.LocationData.fromMap({'latitude': 37.1234, 'longitude': 127.1234});
+  late Stream<CompassModel> compassStream;
 
   final _searchService = SearchService();
   final _apiService = ApiService();
   final _mapService = MapService();
   final socketService = SocketConnector();
+  int updateSync = 0;
+
   bool _isLoaded = false;
   DateTime? lastPressed;
   bool _serviceEnabled = false;
@@ -49,6 +55,8 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
 
   final TextEditingController _searchController = TextEditingController();
   NavigationData? navigationData;
+  double _gpsHeading = 0.0;
+  double _compassHeading = 0.0;
   double _currentHeading = 0.0;
 
   List<p.PlacesSearchResult> _placesResult = [];
@@ -63,8 +71,8 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
 
   void initListeners() async {
     await _getLocation();
-    await _initSocketListener();
-    //await _initCompassListener();
+    _initSocketListener();
+    _initCompassListener();
     await attachUserMarkerChanger();
     await _initVehicleDataListener();
     setState(() {
@@ -81,32 +89,42 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
     });
   }
 
-  Future<void> _initCompassListener() {
-    FlutterCompass.events?.listen((CompassEvent event) {
-      _currentHeading = event.heading!;
-      if (_currentHeading < 0) {
-        _currentHeading += 360;
-      }
-      socketService.setDirection(_currentHeading);
-    });
+  Future<void> _initCompassListener() async {
+    compassStream = Compass().compassUpdates(
+        interval: const Duration(milliseconds: 100),
+        azimuthFix: 0,
+        currentLoc: MyLoc(
+            latitude: _locationData.latitude!,
+            longitude: _locationData.longitude!));
 
-    return Future(() => null);
+    compassStream.listen((CompassModel compassModel) {
+      _compassHeading = compassModel.angle;
+      if (_isStickyButtonPressed == false) {
+        _currentHeading = _compassHeading;
+      }
+      _updateUserMarker();
+    });
   }
 
   Future<void> attachUserMarkerChanger() {
     _location.changeSettings(
       accuracy: l.LocationAccuracy.high,
-      interval: 1500,
+      interval: 1000,
     );
     _location.onLocationChanged.listen((l.LocationData currentLocation) {
       setState(() {
-        _currentHeading = currentLocation.heading ?? 0;
-        if(_currentHeading!=0) socketService.setDirection(_currentHeading);
+        _gpsHeading = currentLocation.heading ?? 0;
+        if (_gpsHeading != 0 && (currentLocation.headingAccuracy ?? 0) <= 15) {
+          _currentHeading = _gpsHeading;
+        } else {
+          _currentHeading = _compassHeading;
+        }
         _locationData = currentLocation;
-        socketService.sendLocationData(currentLocation);
-        _updateUserMarker();
-        _moveCameraToCurrentLocation();
       });
+      _updateUserMarker();
+      _moveCameraToCurrentLocation();
+      socketService.setDirection(_currentHeading);
+      socketService.sendLocationData(currentLocation);
     });
     return Future(() => null);
   }
@@ -239,11 +257,10 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
     Marker userMarker = Marker(
       markerId: const MarkerId('user'),
       position: LatLng(LocationSingleton().lat, LocationSingleton().lng),
-      // position: LatLng(_locationData.latitude!, _locationData.longitude!),
-      // The rotation is the direction of travel
-      // rotation: _currentHeading / 180 * pi,
+      rotation: !_isStickyButtonPressed ? _currentHeading : 0.0,
       icon: customIcon,
     );
+
     setState(() {
       _markers.removeWhere((marker) => marker.markerId.value == 'user');
       _markers.add(userMarker);
@@ -284,17 +301,17 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
     });
   }
 
-// WidgetsBinding.instance.addPostFrameCallback((_) {
-  //   if (!_isLoaded) {
-  //     Assets().showLoadingDialog(context, "Loading...");
-  //   } else if (_isLoaded && Navigator.of(context).canPop()) {
-  //     Navigator.of(context).pop();
-  //   }
-  // });
-
   @override
   Widget build(BuildContext context) {
     super.build(context);
+
+    // WidgetsBinding.instance.addPostFrameCallback((_) {
+    //   if (!_isLoaded) {
+    //     Assets().showLoadingDialog(context, "Loading...");
+    //   } else if (_isLoaded && Navigator.of(context).canPop()) {
+    //     Navigator.of(context).pop();
+    //   }
+    // });
 
     return PopScope(
       canPop: false,
@@ -524,7 +541,31 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
           right: MediaQuery.of(context).size.width * 0.04,
           top: MediaQuery.of(context).size.height * 0.2,
           child: Text(
-            (_locationData.speed ?? 0 * 3.6).toStringAsFixed(0),
+            '${(_locationData.speed ?? 0 * 3.6).toInt()} km/h',
+            style: const TextStyle(
+              color: Colors.black,
+              fontSize: 60,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+        Positioned(
+          right: MediaQuery.of(context).size.width * 0.04,
+          top: MediaQuery.of(context).size.height * 0.3,
+          child: Text(
+            '${(LocationSingleton().confidence * 100).toInt()} %',
+            style: const TextStyle(
+              color: Colors.black,
+              fontSize: 60,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+        Positioned(
+          right: MediaQuery.of(context).size.width * 0.04,
+          top: MediaQuery.of(context).size.height * 0.4,
+          child: Text(
+            '${(_currentHeading).toInt()} °',
             style: const TextStyle(
               color: Colors.black,
               fontSize: 60,
@@ -600,8 +641,7 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
         ? '$remainingTimeMin M'
         : '${remainingTimeMin ~/ 60} H ${remainingTimeMin % 60} M';
 
-    String currentLocation =
-        LocationSingleton().locationName;
+    String currentLocation = LocationSingleton().locationName;
     double screenWidth = MediaQuery.of(context).size.width;
     double containerWidth = screenWidth * 0.50;
 

@@ -1,5 +1,4 @@
 import 'package:am_app/model/provider/user_provider.dart';
-import 'package:am_app/screen/admin/monitor_page.dart';
 import 'package:am_app/screen/login/login_page.dart';
 import 'package:am_app/screen/login/user_info_page.dart';
 import 'package:am_app/screen/map/map_page.dart';

@@ -3,7 +3,6 @@ import 'package:am_app/model/provider/vehicle_provider.dart';
 import 'package:am_app/screen/asset/assets.dart';
 import 'package:am_app/screen/map/map_page.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 import 'package:provider/provider.dart';
@@ -69,5 +68,6 @@ class MainPageState extends State<MainPage> {
     } else if (!gpsStatus.isGranted) {
       await Permission.location.request();
     }
+    
   }
 }
