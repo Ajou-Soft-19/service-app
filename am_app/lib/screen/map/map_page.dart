@@ -1,18 +1,16 @@
 import 'dart:async';
-import 'dart:math';
 
 import 'package:am_app/model/api/dto/navigation_path.dart';
 import 'package:am_app/model/provider/vehicle_provider.dart';
 import 'package:am_app/model/singleton/alert_singleton.dart';
 import 'package:am_app/model/singleton/location_singleton.dart';
 import 'package:am_app/screen/asset/assets.dart';
-import 'package:am_app/screen/asset/compass_util.dart';
 import 'package:am_app/screen/image_resize.dart';
 import 'package:am_app/model/socket/socket_connector.dart';
 import 'package:am_app/screen/login/setting_page.dart';
+import 'package:am_app/screen/map/navigation_route_confirm_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_compass/flutter_compass.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:location/location.dart' as l;
 import 'package:google_maps_webservice/places.dart' as p;
@@ -21,7 +19,6 @@ import 'package:smooth_compass/utils/smooth_compass.dart';
 import 'package:smooth_compass/utils/src/compass_ui.dart';
 import 'custom_google_map.dart';
 import 'search_service.dart';
-import '../../model/api/navigation_api.dart';
 import 'map_service.dart';
 
 class MapPage extends StatefulWidget {
@@ -31,7 +28,7 @@ class MapPage extends StatefulWidget {
   _MapPageState createState() => _MapPageState();
 }
 
-class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
+class _MapPageState extends State<MapPage> {
   GoogleMapController? _controller;
 
   final l.Location _location = l.Location();
@@ -41,7 +38,6 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
   late Stream<CompassModel> compassStream;
 
   final _searchService = SearchService();
-  final _apiService = ApiService();
   final _mapService = MapService();
   final socketService = SocketConnector();
   int updateSync = 0;
@@ -62,6 +58,7 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
   List<p.PlacesSearchResult> _placesResult = [];
   final Set<Polyline> _polylines = {};
   final Set<Marker> _markers = {};
+  String? _selectedPlaceName;
 
   @override
   void initState() {
@@ -98,7 +95,7 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
             longitude: _locationData.longitude!));
 
     compassStream.listen((CompassModel compassModel) {
-      _compassHeading = compassModel.angle;
+      _compassHeading = compassModel.angle - 8.0;
       if (_isStickyButtonPressed == false) {
         _currentHeading = _compassHeading;
       }
@@ -230,7 +227,8 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
   }
 
   void _startNavigation(destination) async {
-    await drawRoute(destination, context);
+    bool isNaviConfirmed = await confirmNavigationData(destination, context);
+    if (isNaviConfirmed == false) return;
     setState(() {
       _isSearching = false;
       _isStickyButtonPressed = true;
@@ -239,6 +237,7 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
     });
     _moveCameraToCurrentLocation();
     socketService.setUsingNavi(true);
+    Assets().showSnackBar(context, 'Navigation started.');
   }
 
   void _endNavigation() {
@@ -248,6 +247,7 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
     _polylines.clear();
     _searchController.clear();
     setState(() {});
+    Assets().showSnackBar(context, 'Navigation ended.');
   }
 
   void _updateUserMarker() async {
@@ -269,14 +269,18 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
 
   void _moveCameraToCurrentLocation() async {
     if (_isStickyButtonPressed == false || _isSearching) return;
+
+    LatLng userLocation =
+        LatLng(_locationData.latitude!, _locationData.longitude!);
+    var bearing = LocationSingleton().direction;
+
+    var newLatLng = _mapService.calculateCameraPosition(
+        userLocation.latitude, userLocation.longitude, bearing);
+
     _controller!.animateCamera(
       CameraUpdate.newCameraPosition(
         CameraPosition(
-            target: LatLng(_locationData.latitude!, _locationData.longitude!),
-            zoom: 18.0,
-            bearing: LocationSingleton().direction,
-            // bearing: _currentHeading,
-            tilt: 50.0),
+            target: newLatLng, zoom: 18.0, bearing: bearing, tilt: 50.0),
       ),
     );
   }
@@ -303,16 +307,6 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
 
   @override
   Widget build(BuildContext context) {
-    super.build(context);
-
-    // WidgetsBinding.instance.addPostFrameCallback((_) {
-    //   if (!_isLoaded) {
-    //     Assets().showLoadingDialog(context, "Loading...");
-    //   } else if (_isLoaded && Navigator.of(context).canPop()) {
-    //     Navigator.of(context).pop();
-    //   }
-    // });
-
     return PopScope(
       canPop: false,
       onPopInvoked: (bool didPop) async {
@@ -322,6 +316,14 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
 
         if (_isUsingNavi) {
           showEndNavigationConfirm();
+          return;
+        }
+
+        if (_isSearching) {
+          _searchController.clear();
+          _placesResult.clear();
+          _markers.clear();
+          _isSearching = false;
           return;
         }
 
@@ -364,7 +366,7 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
     }
 
     return Positioned(
-      top: MediaQuery.of(context).size.height * 0.025,
+      top: MediaQuery.of(context).size.height * 0.035,
       left: (screenWidth - containerWidth) / 2,
       right: (screenWidth - containerWidth) / 2,
       child: Container(
@@ -389,6 +391,7 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
                 onSubmitted: (value) async {
                   _searchDestination(_searchController.text);
                   _isSearching = true;
+                  _isStickyButtonPressed = false;
                   setState(() {});
                 },
                 decoration: InputDecoration(
@@ -419,7 +422,7 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
                 borderRadius: BorderRadius.circular(4.0),
                 child: IconButton(
                   onPressed: () async {
-                    FocusScope.of(context).unfocus();
+                    FocusManager.instance.primaryFocus?.unfocus();
                     if (_isSearching) {
                       _searchController.clear();
                       _placesResult.clear();
@@ -428,6 +431,7 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
                     } else {
                       _searchDestination(_searchController.text);
                       _isSearching = true;
+                      _isStickyButtonPressed = false;
                     }
                     setState(() {});
                   },
@@ -454,68 +458,93 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
     }
 
     return _placesResult.isNotEmpty
-        ? Positioned(
-            top: MediaQuery.of(context).size.height * 0.6,
-            left: (screenWidth - containerWidth) / 2,
-            right: (screenWidth - containerWidth) / 2,
-            bottom: 20.0,
-            child: Container(
-              width: containerWidth,
-              decoration: BoxDecoration(
-                color: Colors.transparent,
-                borderRadius: BorderRadius.circular(20.0),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.grey.withOpacity(0.1),
-                    spreadRadius: 5,
-                    blurRadius: 7,
-                    offset: const Offset(0, 3),
-                  ),
-                ],
-              ),
-              child: ListView.builder(
-                itemCount: _placesResult.length,
-                itemBuilder: (context, index) {
-                  p.PlacesSearchResult place = _placesResult[index];
-                  LatLng destination = LatLng(place.geometry!.location.lat,
-                      place.geometry!.location.lng);
-                  return Card(
-                    elevation: 2,
-                    child: ListTile(
-                      title: Text(
-                        place.name,
-                        style: const TextStyle(
-                          color: Colors.black,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      onTap: () {
-                        Marker marker = Marker(
-                          markerId: MarkerId(place.placeId),
-                          position: destination,
-                          infoWindow: InfoWindow(title: place.name),
-                        );
-                        setState(() {
-                          _markers.clear();
-                          _markers.add(marker);
-                          _controller!
-                              .moveCamera(CameraUpdate.newLatLng(destination));
-                        });
-                      },
-                      trailing: IconButton(
-                        icon: const Icon(
-                          Icons.navigation,
-                          color: Colors.indigo,
-                        ),
-                        onPressed: () async {
-                          _startNavigation(destination);
-                        },
-                      ),
+        ? DraggableScrollableSheet(
+            initialChildSize: 0.4,
+            minChildSize: 0.2,
+            maxChildSize: 0.6,
+            builder: (BuildContext context, ScrollController scrollController) {
+              return Align(
+                alignment: Alignment.bottomCenter,
+                child: Container(
+                  width: containerWidth,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(30.0),
+                      topRight: Radius.circular(30.0),
                     ),
-                  );
-                },
-              ),
-            ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.grey.withOpacity(0.1),
+                        spreadRadius: 5,
+                        blurRadius: 7,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    children: [
+                      const Icon(Icons.drag_handle),
+                      Expanded(
+                        child: ListView.separated(
+                          controller: scrollController,
+                          itemCount: _placesResult.length,
+                          separatorBuilder: (context, index) => Padding(
+                            padding: EdgeInsets.symmetric(
+                                horizontal: screenWidth * 0.01),
+                            child: Divider(
+                              color: Colors.grey[300],
+                              height: 1,
+                            ),
+                          ),
+                          itemBuilder: (context, index) {
+                            p.PlacesSearchResult place = _placesResult[index];
+                            LatLng destination = LatLng(
+                                place.geometry!.location.lat,
+                                place.geometry!.location.lng);
+                            return ListTile(
+                              contentPadding:
+                                  const EdgeInsets.symmetric(horizontal: 20.0),
+                              title: Text(
+                                place.name,
+                                style: const TextStyle(
+                                  color: Colors.black,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              onTap: () {
+                                Marker marker = Marker(
+                                  markerId: MarkerId(place.placeId),
+                                  position: destination,
+                                  infoWindow: InfoWindow(title: place.name),
+                                );
+                                setState(() {
+                                  _markers.clear();
+                                  _markers.add(marker);
+                                  _controller!.moveCamera(
+                                      CameraUpdate.newLatLng(destination));
+                                });
+                              },
+                              trailing: IconButton(
+                                icon: const Icon(
+                                  Icons.navigation,
+                                  color: Colors.indigo,
+                                  size: 30,
+                                ),
+                                onPressed: () async {
+                                  _selectedPlaceName = place.name;
+                                  _startNavigation(destination);
+                                },
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
           )
         : Container();
   }
@@ -535,13 +564,15 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
           onMapCreated: (controller) {
             _controller = controller;
           },
-          onCameraMoveStarted: () {},
+          onCameraMoveStarted: (event) {
+            print(event);
+          },
         ),
         Positioned(
           right: MediaQuery.of(context).size.width * 0.04,
           top: MediaQuery.of(context).size.height * 0.2,
           child: Text(
-            '${(_locationData.speed ?? 0 * 3.6).toInt()} km/h',
+            '${((_locationData.speed ?? 0) * 3.6).toInt()} km/h',
             style: const TextStyle(
               color: Colors.black,
               fontSize: 60,
@@ -573,58 +604,125 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
             ),
           ),
         ),
-        _isUsingNavi
+        !_isSearching
             ? Positioned(
+                top: _isUsingNavi ? 20 : null,
                 left: 20,
-                bottom: 90,
+                bottom: _isUsingNavi ? null : 20,
                 child: FloatingActionButton(
+                    heroTag: 'stickyButton',
                     onPressed: () {
-                      showEndNavigationConfirm();
+                      _isStickyButtonPressed = !_isStickyButtonPressed;
+                      _moveCameraToCurrentLocation();
+                      setState(() {});
                     },
-                    backgroundColor: Colors.red,
-                    child: const Icon(Icons.stop)),
+                    backgroundColor:
+                        _isStickyButtonPressed ? Colors.blue : Colors.white,
+                    child: Icon(Icons.my_location,
+                        color: _isStickyButtonPressed
+                            ? Colors.white
+                            : Colors.black)),
               )
             : Container(),
-        Positioned(
-          left: 20,
-          bottom: 20,
-          child: FloatingActionButton(
-              onPressed: () {
-                _isStickyButtonPressed = !_isStickyButtonPressed;
-                _moveCameraToCurrentLocation();
-                setState(() {});
-              },
-              backgroundColor:
-                  _isStickyButtonPressed ? Colors.blue : Colors.white,
-              child: Icon(Icons.my_location,
-                  color: _isStickyButtonPressed ? Colors.white : Colors.black)),
-        ),
       ]),
     );
   }
 
   void showEndNavigationConfirm() {
+    double screenWidth = MediaQuery.of(context).size.width;
+    double containerWidth = screenWidth * 0.90;
+
+    if (screenWidth > 600) {
+      containerWidth = 500;
+    }
+
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Stop Navigation'),
-          content: const Text('Are you sure you want to stop navigation?'),
-          actions: <Widget>[
-            TextButton(
-              child: const Text('No'),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-            TextButton(
-              child: const Text('Confirm'),
-              onPressed: () {
-                _endNavigation();
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          elevation: 0,
+          backgroundColor: Colors.transparent,
+          child: LayoutBuilder(
+            builder: (BuildContext context, BoxConstraints constraints) {
+              return Container(
+                width: containerWidth,
+                margin: const EdgeInsets.all(20),
+                padding:
+                    const EdgeInsets.symmetric(vertical: 20, horizontal: 25),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    const Text(
+                      'Stop Navigation',
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    const Text(
+                      'Are you sure you want to stop navigation?',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 16,
+                      ),
+                    ),
+                    const SizedBox(height: 30),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: <Widget>[
+                        ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.grey, // button's fill color
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(30),
+                            ),
+                          ),
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                          },
+                          child: const Text(
+                            'No',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 20),
+                        ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.red,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(30),
+                            ),
+                          ),
+                          onPressed: () {
+                            _endNavigation();
+                            Navigator.of(context).pop();
+                          },
+                          child: const Text(
+                            'Confirm',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
         );
       },
     );
@@ -641,9 +739,8 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
         ? '$remainingTimeMin M'
         : '${remainingTimeMin ~/ 60} H ${remainingTimeMin % 60} M';
 
-    String currentLocation = LocationSingleton().locationName;
     double screenWidth = MediaQuery.of(context).size.width;
-    double containerWidth = screenWidth * 0.50;
+    double containerWidth = screenWidth * 0.80;
 
     if (screenWidth > 600) {
       containerWidth = 300;
@@ -673,7 +770,9 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
                       const Icon(Icons.location_on, color: Colors.red),
                       Flexible(
                         child: Text(
-                          currentLocation,
+                          LocationSingleton().locationName == ''
+                              ? _selectedPlaceName ?? 'Destination'
+                              : LocationSingleton().locationName,
                           style: const TextStyle(
                             color: Colors.black,
                             fontSize: 19,
@@ -693,28 +792,46 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
                 Flexible(
-                  child: Text(
-                    remainingTimeDisplay,
-                    style: const TextStyle(
-                      color: Colors.black,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                    textAlign: TextAlign.center,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: <Widget>[
+                      const Icon(Icons.timer, color: Colors.green),
+                      const SizedBox(
+                        width: 3,
+                      ),
+                      Text(
+                        remainingTimeDisplay,
+                        style: const TextStyle(
+                          color: Colors.black,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
                   ),
                 ),
                 const SizedBox(width: 16),
                 Flexible(
-                  child: Text(
-                    remainingDistanceDisplay,
-                    style: const TextStyle(
-                      color: Colors.black,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                    textAlign: TextAlign.center,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: <Widget>[
+                      const Icon(Icons.drive_eta, color: Colors.blue),
+                      const SizedBox(
+                        width: 3,
+                      ),
+                      Text(
+                        remainingDistanceDisplay,
+                        style: const TextStyle(
+                          color: Colors.black,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
                   ),
                 ),
               ],
@@ -725,25 +842,46 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
     );
   }
 
-  Future<void> drawRoute(LatLng destination, BuildContext context) async {
+  Future<bool> confirmNavigationData(
+      LatLng destination, BuildContext context) async {
     List<LatLng> routePoints = [];
+    p.PlacesSearchResult? place = findPlaceByLatLng(destination);
+    if (place == null) return false;
     try {
-      navigationData = await _apiService.getNavigationPathNoLogin(
-          _locationData.longitude!,
-          _locationData.latitude!,
-          destination.longitude,
-          destination.latitude);
+      navigationData = await Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (context) => NavigationRouteConfirmPage(
+                source: LocationSingleton().currentLocLatLng,
+                destination: destination,
+                destinationName: place.name)),
+      );
+
+      if (navigationData == null) return false;
 
       routePoints = navigationData!.pathPointsToLatLng();
     } catch (e) {
       debugPrint(e.toString());
       Assets().showErrorSnackBar(context, e.toString());
     }
-    Polyline route = await _mapService.drawRoute(routePoints);
+    Polyline route = await _mapService.drawRoute(routePoints,
+        id: 'route_confirmed', width: 8);
 
     setState(() {
       _polylines.add(route);
     });
+
+    return true;
+  }
+
+  p.PlacesSearchResult? findPlaceByLatLng(LatLng destination) {
+    for (var place in _placesResult) {
+      if (place.geometry!.location.lat == destination.latitude &&
+          place.geometry!.location.lng == destination.longitude) {
+        return place;
+      }
+    }
+    return null;
   }
 
   Future<List<LatLng>> searchPlaces(String value) async {
@@ -772,8 +910,4 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
     });
     return destination;
   }
-
-  @override
-  // TODO: implement wantKeepAlive
-  bool get wantKeepAlive => true;
 }

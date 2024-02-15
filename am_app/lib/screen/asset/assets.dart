@@ -90,8 +90,15 @@ class Assets {
   }
 
   void showErrorSnackBar(BuildContext context, String? message) {
+    double screenWidth = MediaQuery.of(context).size.width;
+    double containerWidth = screenWidth * 0.90;
+
+    if (screenWidth > 600) {
+      containerWidth = 500;
+    }
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
+        width: containerWidth,
         content: Row(
           children: [
             const Icon(Icons.error, color: Colors.red),
@@ -109,8 +116,15 @@ class Assets {
   }
 
   void showSnackBar(BuildContext context, String? message) {
+    double screenWidth = MediaQuery.of(context).size.width;
+    double containerWidth = screenWidth * 0.90;
+
+    if (screenWidth > 600) {
+      containerWidth = 500;
+    }
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
+        width: containerWidth,
         content: Row(
           children: [
             const Icon(Icons.task_alt, color: Colors.blue),
