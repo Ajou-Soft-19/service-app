@@ -29,6 +29,7 @@ class LocationSingleton {
   void setMapMatchedLocation(Map<String, dynamic> parsedJson) {
     Map<String, dynamic> data = parsedJson['data'];
     if (data['vehicleStatusId'] != null) return;
+    if (data['location'] == null) return;
     Map<String, dynamic> location = data['location'];
     lat = location['latitude'];
     lng = location['longitude'];

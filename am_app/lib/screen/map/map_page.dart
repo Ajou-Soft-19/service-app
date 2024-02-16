@@ -5,7 +5,7 @@ import 'package:am_app/model/provider/user_provider.dart';
 import 'package:am_app/model/provider/vehicle_provider.dart';
 import 'package:am_app/model/singleton/alert_singleton.dart';
 import 'package:am_app/model/singleton/location_singleton.dart';
-import 'package:am_app/model/socket/emergency_socket_connector.dart';
+
 import 'package:am_app/screen/asset/assets.dart';
 import 'package:am_app/screen/image_resize.dart';
 import 'package:am_app/model/socket/socket_connector.dart';
@@ -58,6 +58,7 @@ class _MapPageState extends State<MapPage> {
   double _gpsHeading = 0.0;
   double _compassHeading = 0.0;
   double _currentHeading = 0.0;
+  var lastUpdatedTime = '';
 
   List<p.PlacesSearchResult> _placesResult = [];
   final Set<Polyline> _polylines = {};
@@ -137,6 +138,9 @@ class _MapPageState extends State<MapPage> {
         .listen((LocationSingleton locationSingleton) {
       _updateUserMarker();
       _moveCameraToCurrentLocation();
+      DateTime now = DateTime.now();
+      lastUpdatedTime =
+          "${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}:${now.second.toString().padLeft(2, '0')}";
     });
 
     return Future(() => null);
@@ -619,6 +623,18 @@ class _MapPageState extends State<MapPage> {
           top: MediaQuery.of(context).size.height * 0.4,
           child: Text(
             '${(_currentHeading).toInt()} °',
+            style: const TextStyle(
+              color: Colors.black,
+              fontSize: 60,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+        Positioned(
+          right: MediaQuery.of(context).size.width * 0.04,
+          top: MediaQuery.of(context).size.height * 0.5,
+          child: Text(
+            lastUpdatedTime,
             style: const TextStyle(
               color: Colors.black,
               fontSize: 60,

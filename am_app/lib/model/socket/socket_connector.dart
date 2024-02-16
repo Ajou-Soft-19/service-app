@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-import 'package:am_app/model/api/dto/vehicle.dart';
 import 'package:am_app/model/api/token_api_utils.dart';
 import 'package:am_app/model/provider/user_provider.dart';
 import 'package:am_app/model/socket/socket_message_handler.dart';
@@ -12,6 +11,8 @@ import 'package:location/location.dart';
 
 class SocketConnector extends TokenApiUtils {
   final url = "${dotenv.env['SOCKET_SERVER_URL']}/ws/my-location";
+  final emergencyUrl =
+      "${dotenv.env['SOCKET_SERVER_URL']}/ws/emergency-location";
   late IOWebSocketChannel _channel;
   final SocketMessageHandler _socketMessageHandler = SocketMessageHandler();
   bool _isUsingNavi = false;
@@ -93,7 +94,7 @@ class SocketConnector extends TokenApiUtils {
   }
 
   Future<void> _connectWithLogin() async {
-    final socket = await WebSocket.connect(url,
+    final socket = await WebSocket.connect(emergencyUrl,
         headers: await getHeaders(authRequired: true));
     _channel = IOWebSocketChannel(socket);
     _isConnected = true;
@@ -189,7 +190,7 @@ class SocketConnector extends TokenApiUtils {
     if (!_isConnected) return;
 
     try {
-      Map<String, Object> data = (_userProvider != null)
+      Map<String, Object> data = (_vehicleId == null)
           ? getUpdateJson(currentLocation)
           : getEmergencyUpdateJson(
               currentLocation, naviPathId, emergencyEventId);
@@ -226,7 +227,7 @@ class SocketConnector extends TokenApiUtils {
         'meterPerSec': currentLocation.speed ?? 0.0,
         'direction': _direction,
         'timestamp': DateTime.now().toUtc().toIso8601String(),
-        'onEmergency': emergencyEventId != 0,
+        'onEmergencyEvent': emergencyEventId != null && naviPathId != 0,
         'naviPathId': naviPathId,
         'emergencyEventId': emergencyEventId,
       },
