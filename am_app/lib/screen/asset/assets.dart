@@ -90,8 +90,15 @@ class Assets {
   }
 
   void showErrorSnackBar(BuildContext context, String? message) {
+    double screenWidth = MediaQuery.of(context).size.width;
+    double containerWidth = screenWidth * 0.90;
+
+    if (screenWidth > 600) {
+      containerWidth = 500;
+    }
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
+        width: containerWidth,
         content: Row(
           children: [
             const Icon(Icons.error, color: Colors.red),
@@ -109,8 +116,15 @@ class Assets {
   }
 
   void showSnackBar(BuildContext context, String? message) {
+    double screenWidth = MediaQuery.of(context).size.width;
+    double containerWidth = screenWidth * 0.90;
+
+    if (screenWidth > 600) {
+      containerWidth = 500;
+    }
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
+        width: containerWidth,
         content: Row(
           children: [
             const Icon(Icons.task_alt, color: Colors.blue),
@@ -147,46 +161,37 @@ class Assets {
     );
   }
 
-  void showWhereEmergency(BuildContext context, Alignment alignment, String direction) {
-    OverlayEntry overlayEntry = OverlayEntry(builder: (context) => Stack(
-      children: [
-        Padding(
-          padding: const EdgeInsets.all(100),
-          child: Align(
-            alignment: alignment,
-            child: const IgnorePointer(
-              ignoring: true,
-              child: Icon(
-                Icons.warning,
-                size: 100,
-                color: Colors.red
-              )
-            )
-          ),
-        ),
-
-        Positioned(
-          bottom: 20.0,
-          child: IgnorePointer(
-            ignoring: true,
-            child: Container(
-              alignment: Alignment.center,
-              width:MediaQuery.of(context).size.width,
-              child: Text(
-                'Emergency Car From the $direction\nSlow Down and Move Aside!',
-                style: const TextStyle(
-                  color: Colors.red,
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold
+  void showWhereEmergency(
+      BuildContext context, Alignment alignment, String direction) {
+    OverlayEntry overlayEntry = OverlayEntry(
+        builder: (context) => Stack(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(100),
+                  child: Align(
+                      alignment: alignment,
+                      child: const IgnorePointer(
+                          ignoring: true,
+                          child: Icon(Icons.warning,
+                              size: 100, color: Colors.red))),
                 ),
-              )
-            )
-          )
-        )
-      ],
-    ));
-    Overlay.of(context)!.insert(overlayEntry);
-
+                Positioned(
+                    bottom: 20.0,
+                    child: IgnorePointer(
+                        ignoring: true,
+                        child: Container(
+                            alignment: Alignment.center,
+                            width: MediaQuery.of(context).size.width,
+                            child: Text(
+                              'Emergency Car From the $direction\nSlow Down and Move Aside!',
+                              style: const TextStyle(
+                                  color: Colors.red,
+                                  fontSize: 28,
+                                  fontWeight: FontWeight.bold),
+                            ))))
+              ],
+            ));
+    Overlay.of(context).insert(overlayEntry);
 
     // 5초 후에 위젯 제거
     Future.delayed(const Duration(seconds: 3))

@@ -5,15 +5,16 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:flutter/material.dart';
 
 class MapService {
-  Future<Polyline> drawRoute(List<LatLng> route) async {
+  Future<Polyline> drawRoute(List<LatLng> route,
+      {String id = 'route', int width = 6}) async {
     List<LatLng> routePoints =
         route.map((point) => LatLng(point.latitude, point.longitude)).toList();
 
     Polyline routeLine = Polyline(
-      polylineId: const PolylineId('route'),
+      polylineId: PolylineId(id),
       visible: true,
       points: routePoints,
-      width: 6,
+      width: width,
       color: Colors.blue,
     );
     return routeLine;
@@ -106,5 +107,25 @@ class MapService {
     }
 
     return false;
+  }
+
+  LatLng calculateCameraPosition(double lat, double lng, double bearing) {
+    double radius = 6371.0;
+    double distance = 140 / 1000;
+
+    double bearingRad = pi / 180 * bearing;
+    double latRad = pi / 180 * lat;
+    double lngRad = pi / 180 * lng;
+
+    double lat2Rad = asin(sin(latRad) * cos(distance / radius) +
+        cos(latRad) * sin(distance / radius) * cos(bearingRad));
+    double lng2Rad = lngRad +
+        atan2(sin(bearingRad) * sin(distance / radius) * cos(latRad),
+            cos(distance / radius) - sin(latRad) * sin(lat2Rad));
+
+    double lat2 = 180 / pi * lat2Rad;
+    double lng2 = 180 / pi * lng2Rad;
+
+    return LatLng(lat2, lng2);
   }
 }

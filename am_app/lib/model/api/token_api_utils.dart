@@ -100,6 +100,13 @@ class TokenApiUtils {
     return;
   }
 
+  Future<void> checkEmergencyRole(UserProvider userProvider) async {
+    if (!userProvider.hasEmergencyRole()) {
+      throw Exception(ExceptionMessage.NO_ADMIN_ROLE);
+    }
+    return;
+  }
+
   Future<void> isResponseSuccess(http.Response response) async {
     if (response.statusCode == 500) {
       throw Exception('Server error');

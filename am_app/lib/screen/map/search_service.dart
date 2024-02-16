@@ -7,4 +7,6 @@ class SearchService {
     PlacesSearchResponse response = await places.searchByText(query);
     return response.results;
   }
+
+  
 }
