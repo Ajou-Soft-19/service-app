@@ -1,9 +1,11 @@
 import 'dart:async';
 
 import 'package:am_app/model/api/dto/navigation_path.dart';
+import 'package:am_app/model/provider/user_provider.dart';
 import 'package:am_app/model/provider/vehicle_provider.dart';
 import 'package:am_app/model/singleton/alert_singleton.dart';
 import 'package:am_app/model/singleton/location_singleton.dart';
+import 'package:am_app/model/socket/emergency_socket_connector.dart';
 import 'package:am_app/screen/asset/assets.dart';
 import 'package:am_app/screen/image_resize.dart';
 import 'package:am_app/model/socket/socket_connector.dart';
@@ -36,6 +38,8 @@ class _MapPageState extends State<MapPage> {
   l.LocationData _locationData =
       l.LocationData.fromMap({'latitude': 37.1234, 'longitude': 127.1234});
   late Stream<CompassModel> compassStream;
+  StreamSubscription? _locationSubscription;
+  StreamSubscription? _locationSingletonSubscription;
 
   final _searchService = SearchService();
   final _mapService = MapService();
@@ -70,6 +74,7 @@ class _MapPageState extends State<MapPage> {
     await _getLocation();
     _initSocketListener();
     _initCompassListener();
+    await attachLocationUpdater();
     await attachUserMarkerChanger();
     await _initVehicleDataListener();
     setState(() {
@@ -80,9 +85,10 @@ class _MapPageState extends State<MapPage> {
   Future<void> _initSocketListener() async {
     final vehicleProvider =
         Provider.of<VehicleProvider>(context, listen: false);
-    await socketService.initSocket();
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    await socketService.initSocket(userProvider, vehicleProvider.vehicleId);
     vehicleProvider.addListener(() {
-      socketService.initSocket();
+      socketService.initSocket(userProvider, vehicleProvider.vehicleId);
     });
   }
 
@@ -103,36 +109,50 @@ class _MapPageState extends State<MapPage> {
     });
   }
 
-  Future<void> attachUserMarkerChanger() {
-    _location.changeSettings(
-      accuracy: l.LocationAccuracy.high,
-      interval: 1000,
-    );
-    _location.onLocationChanged.listen((l.LocationData currentLocation) {
+  Future<void> attachLocationUpdater() async {
+    _locationSubscription =
+        _location.onLocationChanged.listen((l.LocationData currentLocation) {
+      print('onLocationChanged called at: ${DateTime.now()}');
       setState(() {
         _gpsHeading = currentLocation.heading ?? 0;
-        if (_gpsHeading != 0 && (currentLocation.headingAccuracy ?? 0) <= 15) {
+        if (_gpsHeading != 0 &&
+            (currentLocation.headingAccuracy ?? 0) <= 15 &&
+            currentLocation.speed! >= 1.0) {
           _currentHeading = _gpsHeading;
         } else {
           _currentHeading = _compassHeading;
         }
         _locationData = currentLocation;
       });
+
+      socketService.setDirection(_currentHeading);
+      socketService.sendLocationData(currentLocation, null, null);
+    });
+    return Future(() => null);
+  }
+
+  Future<void> attachUserMarkerChanger() {
+    _locationSingletonSubscription = LocationSingleton()
+        .locationStream
+        .listen((LocationSingleton locationSingleton) {
       _updateUserMarker();
       _moveCameraToCurrentLocation();
-      socketService.setDirection(_currentHeading);
-      socketService.sendLocationData(currentLocation);
     });
+
     return Future(() => null);
   }
 
   @override
   void dispose() {
     socketService.close();
+    _locationSubscription?.cancel();
+    _locationSingletonSubscription?.cancel();
     super.dispose();
   }
 
   Future<void> _getLocation() async {
+    await _location.changeSettings(
+        accuracy: l.LocationAccuracy.high, interval: 1000);
     _serviceEnabled = await _location.serviceEnabled();
     if (!_serviceEnabled) {
       _serviceEnabled = await _location.requestService();
@@ -584,7 +604,9 @@ class _MapPageState extends State<MapPage> {
           right: MediaQuery.of(context).size.width * 0.04,
           top: MediaQuery.of(context).size.height * 0.3,
           child: Text(
-            '${(LocationSingleton().confidence * 100).toInt()} %',
+            LocationSingleton().confidence != null
+                ? '${(LocationSingleton().confidence! * 100).toInt()} %'
+                : 'null %',
             style: const TextStyle(
               color: Colors.black,
               fontSize: 60,

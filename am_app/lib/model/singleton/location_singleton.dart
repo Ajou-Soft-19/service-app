@@ -5,42 +5,26 @@ import 'package:location/location.dart';
 
 class LocationSingleton {
   static final LocationSingleton _singleton = LocationSingleton._internal();
-  Location location = Location();
   LocationData? _currentLocation;
   double lat = 0.0;
   double lng = 0.0;
   double direction = 0.0;
   String locationName = '';
-  double confidence = 0.0;
+  double? confidence = 0.0;
+  final _locationController = StreamController<LocationSingleton>.broadcast();
+  Stream<LocationSingleton> get locationStream => _locationController.stream;
 
   factory LocationSingleton() {
     return _singleton;
   }
 
-  LocationSingleton._internal() {
-    location.onLocationChanged.listen((LocationData currentLocation) {
-      _currentLocation = currentLocation;
-    });
-  }
+  LocationSingleton._internal();
 
   LatLng get currentLocLatLng => LatLng(
         _currentLocation?.latitude ?? 0,
         _currentLocation?.longitude ?? 0,
       );
   LocationData? get currentLocation => _currentLocation;
-
-  Future<LocationData?> getCurrentLocation() async {
-    Location location = Location();
-    LocationData locationData;
-
-    locationData = await location.getLocation();
-    _currentLocation = locationData;
-    return locationData;
-  }
-
-  void setLocationData(LocationData location) {
-    _currentLocation = location;
-  }
 
   void setMapMatchedLocation(Map<String, dynamic> parsedJson) {
     Map<String, dynamic> data = parsedJson['data'];
@@ -50,6 +34,7 @@ class LocationSingleton {
     lng = location['longitude'];
     direction = location['direction'];
     locationName = location['locationName'];
-    confidence = location['confidence'] ?? 0.0;
+    confidence = location['confidence'];
+    _locationController.add(this);
   }
 }
