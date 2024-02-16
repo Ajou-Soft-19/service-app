@@ -13,6 +13,7 @@ import 'package:am_app/screen/login/setting_page.dart';
 import 'package:am_app/screen/map/navigation_route_confirm_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_tts/flutter_tts.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:location/location.dart' as l;
 import 'package:google_maps_webservice/places.dart' as p;
@@ -65,10 +66,18 @@ class _MapPageState extends State<MapPage> {
   final Set<Marker> _markers = {};
   String? _selectedPlaceName;
 
+  final FlutterTts tts = FlutterTts();
+
   @override
   void initState() {
     super.initState();
     initListeners();
+    tts.setLanguage('en-US');
+    tts.setSpeechRate(0.4);
+    tts.setPitch(1.0);
+    tts.setVolume(0.8);
+    tts.getDefaultEngine;
+    tts.getDefaultVoice;
   }
 
   void initListeners() async {
@@ -135,7 +144,12 @@ class _MapPageState extends State<MapPage> {
     _locationSingletonSubscription = LocationSingleton()
         .locationStream
         .listen((LocationSingleton locationSingleton) {
-      if(isArrived()){Assets().showSnackBar(context, 'Almost arrived. End guidance'); debugPrint("Arrived"); _endNavigation(); return;}
+      if (isArrived()) {
+        Assets().showSnackBar(context, 'Almost arrived. End guidance');
+        debugPrint("Arrived");
+        _endNavigation();
+        return;
+      }
       _updateUserMarker();
       _moveCameraToCurrentLocation();
       DateTime now = DateTime.now();
@@ -211,6 +225,10 @@ class _MapPageState extends State<MapPage> {
     );
   }
 
+  Future<void> _speak(String text) async {
+    await tts.speak(text);
+  }
+
   Future<void> _initVehicleDataListener() async {
     AlertSingleton().onVehicleDataUpdated.listen((licenseNumber) {
       setState(() async {
@@ -238,10 +256,6 @@ class _MapPageState extends State<MapPage> {
         if (!AlertSingleton().polylines.containsKey(licenseNumber)) {
           _polylines.removeWhere(
               (polyline) => polyline.polylineId.value == licenseNumber);
-        }
-        if(await _mapService.doPathsIntersect(navigationData!.pathPoint, latLngToPathPoints(AlertSingleton().pathPoints[licenseNumber]!.values.toList()))) {
-          debugPrint("Hello");
-          // 메시지 예쁘게 나오게 수정, 경로 겹쳤다고 할 때 미니맵을 띄울까?
         }
 
         LatLng? currentPathPointLatLng =
@@ -285,6 +299,17 @@ class _MapPageState extends State<MapPage> {
         debugPrint(alignment.toString());
         debugPrint(direction);
         Assets().showWhereEmergency(context, alignment, direction);
+        if (AlertSingleton().isAlerted[licenseNumber] == false) {
+          if (await _mapService.doPathsIntersect(
+              navigationData!.pathPoint,
+              latLngToPathPoints(AlertSingleton()
+                  .pathPoints[licenseNumber]!
+                  .values
+                  .toList()))) {
+            await _speak("Emergency Car from $direction. Slow Down and Move Aside!");
+          }
+          AlertSingleton().isAlerted[licenseNumber] = true;
+        }
       });
     });
     return Future(() => null);
@@ -961,14 +986,20 @@ class _MapPageState extends State<MapPage> {
     return latLngList.asMap().entries.map((entry) {
       int index = entry.key;
       LatLng latLng = entry.value;
-      return PathPoint(index: index, location: Location(longitude: latLng.longitude, latitude: latLng.latitude));
+      return PathPoint(
+          index: index,
+          location:
+              Location(longitude: latLng.longitude, latitude: latLng.latitude));
     }).toList();
   }
 
-  bool isArrived(){
+  bool isArrived() {
     bool arrived = false;
-    if(navigationData == null) return false;
-    if(AlertSingleton().calculateDistance(LocationSingleton().getCurrentLocLatLng()!, navigationData!.pathPointsToLatLng().last)<50) {
+    if (navigationData == null) return false;
+    if (AlertSingleton().calculateDistance(
+            LocationSingleton().getCurrentLocLatLng()!,
+            navigationData!.pathPointsToLatLng().last) <
+        30) {
       arrived = true;
     }
     return arrived;

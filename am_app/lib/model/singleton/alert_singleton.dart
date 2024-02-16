@@ -13,6 +13,7 @@ class AlertSingleton {
   Map<String, int> currentPathPoint = {}; // 차량 번호에 따른 현재 경로 인덱스
   Map<String, Marker> markers = {}; // 차량 번호에 따른 마커
   Map<String, Polyline> polylines = {}; // 차량 번호에 따른 폴리라인 (경로선)
+  Map<String, bool> isAlerted = {};
 
   final _controller = StreamController<String>.broadcast();
 
@@ -42,6 +43,7 @@ class AlertSingleton {
         pathPoints[licenseNumber]?.values.toList();
     polylines[licenseNumber] =
         await MapService().drawRouteRedbyId(emergencyPathList!, licenseNumber);
+    isAlerted[licenseNumber] = false;
     _controller.sink.add(licenseNumber);
   }
 
@@ -66,6 +68,7 @@ class AlertSingleton {
     currentPathPoint.remove(licenseNumber);
     markers.remove(licenseNumber);
     polylines.remove(licenseNumber);
+    isAlerted.remove(licenseNumber);
 
     _controller.sink.add(licenseNumber);
   }
