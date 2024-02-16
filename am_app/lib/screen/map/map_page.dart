@@ -100,6 +100,7 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
     );
     _location.onLocationChanged.listen((l.LocationData currentLocation) {
       setState(() {
+        if(isArrived()){Assets().showSnackBar(context, 'Almost arrived. End guidance'); debugPrint("Arrived"); _endNavigation(); return;}
         _currentHeading = currentLocation.heading ?? 0;
         if(_currentHeading!=0) socketService.setDirection(_currentHeading);
         _locationData = currentLocation;
@@ -140,7 +141,7 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
 
   Future<void> _initVehicleDataListener() async {
     AlertSingleton().onVehicleDataUpdated.listen((licenseNumber) {
-      setState(() {
+      setState(() async {
         _isStickyButtonPressed = true;
         _moveCameraToCurrentLocation();
 
@@ -166,6 +167,11 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
           _polylines.removeWhere(
               (polyline) => polyline.polylineId.value == licenseNumber);
         }
+        if(await _mapService.doPathsIntersect(navigationData!.pathPoint, latLngToPathPoints(AlertSingleton().pathPoints[licenseNumber]!.values.toList()))) {
+          debugPrint("Hello");
+          // 메시지 예쁘게 나오게 수정, 경로 겹쳤다고 할 때 미니맵을 띄울까?
+        }
+
         LatLng? currentPathPointLatLng =
             AlertSingleton().markers[licenseNumber]?.position;
         if (currentPathPointLatLng == null) return;
@@ -229,6 +235,7 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
     _markers.clear();
     _polylines.clear();
     _searchController.clear();
+    navigationData = null;
     setState(() {});
   }
 
@@ -731,6 +738,23 @@ class _MapPageState extends State<MapPage> with AutomaticKeepAliveClientMixin {
       _controller!.moveCamera(CameraUpdate.newLatLng(destination));
     });
     return destination;
+  }
+
+  List<PathPoint> latLngToPathPoints(List<LatLng> latLngList) {
+    return latLngList.asMap().entries.map((entry) {
+      int index = entry.key;
+      LatLng latLng = entry.value;
+      return PathPoint(index: index, location: Location(longitude: latLng.longitude, latitude: latLng.latitude));
+    }).toList();
+  }
+
+  bool isArrived(){
+    bool arrived = false;
+    if(navigationData == null) return false;
+    if(AlertSingleton().calculateDistance(LocationSingleton().currentLocLatLng, navigationData!.pathPointsToLatLng().last)<50) {
+      arrived = true;
+    }
+    return arrived;
   }
 
   @override
