@@ -22,7 +22,6 @@ class ApiService extends TokenApiUtils {
 
     if (response.statusCode == 200) {
       Map<String, dynamic> jsonResponse = jsonDecode(response.body);
-      debugPrint("response: ${response.body}");
 
       NavigationData navigationData =
           NavigationData.fromJson(jsonResponse['data']);
@@ -77,7 +76,7 @@ class ApiService extends TokenApiUtils {
     var url = Uri.parse('$serviceServerUrl/api/emergency/event/register');
     var body = jsonEncode({
       'vehicleId': vehicleId,
-      'naviPathId': navigationPahtId,
+      'navigationPathId': navigationPahtId,
     });
 
     try {
@@ -85,6 +84,7 @@ class ApiService extends TokenApiUtils {
           body: body, headers: await getHeaders(authRequired: true));
 
       if (response.statusCode != 200) {
+        debugPrint("response: ${response.body}");
         throw Exception('Failed to register emergency event');
       }
 

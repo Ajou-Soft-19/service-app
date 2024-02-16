@@ -1,23 +1,31 @@
+import 'dart:io';
 import 'dart:math';
 
 import 'package:am_app/model/api/dto/navigation_path.dart';
 import 'package:am_app/model/api/navigation_api.dart';
+import 'package:am_app/model/provider/user_provider.dart';
+import 'package:am_app/model/provider/vehicle_provider.dart';
 import 'package:am_app/screen/asset/assets.dart';
 import 'package:am_app/screen/map/custom_google_map.dart';
 import 'package:am_app/screen/map/map_service.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:provider/provider.dart';
 
 class NavigationRouteConfirmPage extends StatefulWidget {
   final LatLng source;
   final LatLng destination;
   final String destinationName;
+  final bool hasEmergencyEventRegisterAuth;
+  final bool isWaitingForEmergency;
 
   const NavigationRouteConfirmPage(
       {Key? key,
       required this.source,
       required this.destination,
-      required this.destinationName})
+      required this.destinationName,
+      required this.hasEmergencyEventRegisterAuth,
+      required this.isWaitingForEmergency})
       : super(key: key);
 
   @override
@@ -58,11 +66,25 @@ class NavigationRouteConfirmPageState
       LatLng destination, BuildContext context) async {
     List<LatLng> routePoints = [];
     try {
-      navigationData = await _apiService.getNavigationPathNoLogin(
-          widget.source.longitude,
-          widget.source.latitude,
-          destination.longitude,
-          destination.latitude);
+      if (widget.hasEmergencyEventRegisterAuth &&
+          widget.isWaitingForEmergency) {
+        final userProvider = Provider.of<UserProvider>(context, listen: false);
+        final VehicleProvider vehicleProvider =
+            Provider.of<VehicleProvider>(context, listen: false);
+        navigationData = await _apiService.getNavigationPathLogin(
+            widget.source.longitude,
+            widget.source.latitude,
+            destination.longitude,
+            destination.latitude,
+            userProvider,
+            vehicleProvider);
+      } else {
+        navigationData = await _apiService.getNavigationPathNoLogin(
+            widget.source.longitude,
+            widget.source.latitude,
+            destination.longitude,
+            destination.latitude);
+      }
 
       routePoints = navigationData!.pathPointsToLatLng();
     } catch (e) {
@@ -99,7 +121,7 @@ class NavigationRouteConfirmPageState
     if (aspectRatio > 1) {
       padding = screenHeight * 0.30;
     } else {
-      padding = screenWidth * 0.46;
+      padding = screenWidth * 0.30;
     }
 
     CameraUpdate cameraUpdate = CameraUpdate.newLatLngBounds(bounds, padding);
@@ -376,7 +398,7 @@ class NavigationRouteConfirmPageState
               icon: const Icon(Icons.cancel, color: Colors.white),
               label: const Text(
                 'Cancel',
-                style: TextStyle(fontSize: 16),
+                style: TextStyle(fontSize: 14),
               ),
               style: TextButton.styleFrom(
                 foregroundColor: Colors.white,
@@ -394,7 +416,7 @@ class NavigationRouteConfirmPageState
               key: const Key('start_navigation_button'),
               icon: const Icon(Icons.navigation, color: Colors.white),
               label: const Text(
-                'Start Navigation',
+                'Start',
                 style: TextStyle(fontSize: 16),
               ),
               style: TextButton.styleFrom(
