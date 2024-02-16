@@ -113,7 +113,6 @@ class _MapPageState extends State<MapPage> {
   Future<void> attachLocationUpdater() async {
     _locationSubscription =
         _location.onLocationChanged.listen((l.LocationData currentLocation) {
-      print('onLocationChanged called at: ${DateTime.now()}');
       setState(() {
         _gpsHeading = currentLocation.heading ?? 0;
         if (_gpsHeading != 0 &&
@@ -177,6 +176,40 @@ class _MapPageState extends State<MapPage> {
     _moveCameraToCurrentLocation();
   }
 
+  void _updateUserMarker() async {
+    BitmapDescriptor customIcon =
+        await getBitmapDescriptorFromAssetBytes('assets/navigation.png', 110);
+
+    Marker userMarker = Marker(
+      markerId: const MarkerId('user'),
+      position: LatLng(LocationSingleton().lat, LocationSingleton().lng),
+      icon: customIcon,
+    );
+
+    setState(() {
+      _markers.removeWhere((marker) => marker.markerId.value == 'user');
+      _markers.add(userMarker);
+    });
+  }
+
+  void _moveCameraToCurrentLocation() async {
+    if (_isStickyButtonPressed == false || _isSearching) return;
+
+    LatLng userLocation = LocationSingleton().getCurrentLocLatLng() ??
+        LatLng(_locationData.latitude!, _locationData.longitude!);
+    var bearing = LocationSingleton().direction;
+
+    var newLatLng = _mapService.calculateCameraPosition(
+        userLocation.latitude, userLocation.longitude, bearing);
+
+    _controller!.animateCamera(
+      CameraUpdate.newCameraPosition(
+        CameraPosition(
+            target: newLatLng, zoom: 18.0, bearing: bearing, tilt: 50.0),
+      ),
+    );
+  }
+
   Future<void> _initVehicleDataListener() async {
     AlertSingleton().onVehicleDataUpdated.listen((licenseNumber) {
       setState(() {
@@ -208,7 +241,8 @@ class _MapPageState extends State<MapPage> {
         LatLng? currentPathPointLatLng =
             AlertSingleton().markers[licenseNumber]?.position;
         if (currentPathPointLatLng == null) return;
-        LatLng myLatLng = LocationSingleton().currentLocLatLng;
+        LatLng myLatLng = LocationSingleton().getCurrentLocLatLng() ??
+            LatLng(_locationData.latitude!, _locationData.longitude!);
         String? direction = AlertSingleton().determineDirection(AlertSingleton()
                 .calculateBearing(myLatLng, currentPathPointLatLng) -
             _currentHeading);
@@ -272,41 +306,6 @@ class _MapPageState extends State<MapPage> {
     _searchController.clear();
     setState(() {});
     Assets().showSnackBar(context, 'Navigation ended.');
-  }
-
-  void _updateUserMarker() async {
-    BitmapDescriptor customIcon =
-        await getBitmapDescriptorFromAssetBytes('assets/navigation.png', 110);
-
-    Marker userMarker = Marker(
-      markerId: const MarkerId('user'),
-      position: LatLng(LocationSingleton().lat, LocationSingleton().lng),
-      rotation: !_isStickyButtonPressed ? _currentHeading : 0.0,
-      icon: customIcon,
-    );
-
-    setState(() {
-      _markers.removeWhere((marker) => marker.markerId.value == 'user');
-      _markers.add(userMarker);
-    });
-  }
-
-  void _moveCameraToCurrentLocation() async {
-    if (_isStickyButtonPressed == false || _isSearching) return;
-
-    LatLng userLocation =
-        LatLng(_locationData.latitude!, _locationData.longitude!);
-    var bearing = LocationSingleton().direction;
-
-    var newLatLng = _mapService.calculateCameraPosition(
-        userLocation.latitude, userLocation.longitude, bearing);
-
-    _controller!.animateCamera(
-      CameraUpdate.newCameraPosition(
-        CameraPosition(
-            target: newLatLng, zoom: 18.0, bearing: bearing, tilt: 50.0),
-      ),
-    );
   }
 
   void _searchDestination(String value) async {
@@ -884,13 +883,15 @@ class _MapPageState extends State<MapPage> {
       LatLng destination, BuildContext context) async {
     List<LatLng> routePoints = [];
     p.PlacesSearchResult? place = findPlaceByLatLng(destination);
+    debugPrint(destination.toString());
     if (place == null) return false;
     try {
       navigationData = await Navigator.push(
         context,
         MaterialPageRoute(
             builder: (context) => NavigationRouteConfirmPage(
-                source: LocationSingleton().currentLocLatLng,
+                source: LocationSingleton().getCurrentLocLatLng() ??
+                    LatLng(_locationData.latitude!, _locationData.longitude!),
                 destination: destination,
                 destinationName: place.name)),
       );

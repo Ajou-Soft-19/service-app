@@ -1,11 +1,9 @@
 import 'dart:async';
 
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:location/location.dart';
 
 class LocationSingleton {
   static final LocationSingleton _singleton = LocationSingleton._internal();
-  LocationData? _currentLocation;
   double lat = 0.0;
   double lng = 0.0;
   double direction = 0.0;
@@ -20,11 +18,14 @@ class LocationSingleton {
 
   LocationSingleton._internal();
 
-  LatLng get currentLocLatLng => LatLng(
-        _currentLocation?.latitude ?? 0,
-        _currentLocation?.longitude ?? 0,
-      );
-  LocationData? get currentLocation => _currentLocation;
+  LatLng? getCurrentLocLatLng() {
+    if(lat == 0.0 && lng == 0.0) return null;
+
+    return LatLng(
+      lat,
+      lng,
+    );
+  }
 
   void setMapMatchedLocation(Map<String, dynamic> parsedJson) {
     Map<String, dynamic> data = parsedJson['data'];
