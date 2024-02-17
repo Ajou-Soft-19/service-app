@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'dart:collection';
+import 'dart:io';
 
 import 'package:am_app/model/api/dto/navigation_path.dart';
 import 'package:am_app/model/provider/user_provider.dart';
@@ -11,6 +13,7 @@ import 'package:am_app/screen/image_resize.dart';
 import 'package:am_app/model/socket/socket_connector.dart';
 import 'package:am_app/screen/login/setting_page.dart';
 import 'package:am_app/screen/map/navigation_route_confirm_page.dart';
+import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_tts/flutter_tts.dart';
@@ -67,6 +70,9 @@ class _MapPageState extends State<MapPage> {
   String? _selectedPlaceName;
 
   final FlutterTts tts = FlutterTts();
+  AudioPlayer audioPlayer = AudioPlayer();
+
+  Queue<String> messageQueue = Queue<String>();
 
   @override
   void initState() {
@@ -86,7 +92,7 @@ class _MapPageState extends State<MapPage> {
     _initCompassListener();
     await attachLocationUpdater();
     await attachUserMarkerChanger();
-    await _initVehicleDataListener();
+    _initVehicleDataListener();
     setState(() {
       _isLoaded = true;
     });
@@ -226,15 +232,31 @@ class _MapPageState extends State<MapPage> {
   }
 
   Future<void> _speak(String text) async {
+    await tts.awaitSpeakCompletion(true);
     await tts.speak(text);
   }
 
-  Future<void> _initVehicleDataListener() async {
-    AlertSingleton().onVehicleDataUpdated.listen((licenseNumber) {
-      setState(() async {
-        _isStickyButtonPressed = true;
-        _moveCameraToCurrentLocation();
+  Future<void> _speakAlert() async {
+    if (messageQueue.isEmpty) return;
 
+    String message = messageQueue.removeFirst();
+    var result = await tts.speak(message);
+
+    if (result == 1) {
+      _speakAlert(); // 재귀적 호출
+    } else {
+      print("Failed to generate Text-to-Speech");
+    }
+  }
+
+  void _initVehicleDataListener() async {
+    AlertSingleton().onVehicleDataUpdated.listen((licenseNumber) async {
+      if (_isUsingNavi == false || (await _mapService.doPathsIntersect(
+              navigationData!.pathPoint,
+              latLngToPathPoints(AlertSingleton()
+                  .pathPoints[licenseNumber]!
+                  .values
+                  .toList())))) {
         if (AlertSingleton().markers.containsKey(licenseNumber)) {
           _markers
               .removeWhere((marker) => marker.markerId.value == licenseNumber);
@@ -266,53 +288,54 @@ class _MapPageState extends State<MapPage> {
         String? direction = AlertSingleton().determineDirection(AlertSingleton()
                 .calculateBearing(myLatLng, currentPathPointLatLng) -
             _currentHeading);
-        Alignment alignment;
-        switch (direction) {
-          case 'north':
-            alignment = Alignment.topCenter;
-            break;
-          case 'north_east':
-            alignment = Alignment.topRight;
-            break;
-          case 'east':
-            alignment = Alignment.centerRight;
-            break;
-          case 'south_east':
-            alignment = Alignment.bottomRight;
-            break;
-          case 'south':
-            alignment = Alignment.bottomCenter;
-            break;
-          case 'south_west':
-            alignment = Alignment.bottomLeft;
-            break;
-          case 'west':
-            alignment = Alignment.centerLeft;
-            break;
-          case 'north_west':
-            alignment = Alignment.topLeft;
-            break;
-          default:
-            alignment = Alignment.center;
-            break;
-        }
-        debugPrint(alignment.toString());
-        debugPrint(direction);
+        Alignment alignment = _getAlignmentFromDirection(direction);
+
         Assets().showWhereEmergency(context, alignment, direction);
         if (AlertSingleton().isAlerted[licenseNumber] == false) {
-          if (await _mapService.doPathsIntersect(
-              navigationData!.pathPoint,
-              latLngToPathPoints(AlertSingleton()
-                  .pathPoints[licenseNumber]!
-                  .values
-                  .toList()))) {
-            await _speak("Emergency Car from $direction. Slow Down and Move Aside!");
+          messageQueue.add(
+              "Emergency Car from ${direction.replaceAll('_', ' ')} Slow Down");
+          // await _speak(
+          //     "Emergency Car from ${direction.replaceAll('_', ' ')} Slow Down");
+          if (direction == 'south') {
+            messageQueue.add("It's behind you, move aside");
+            // await _speak("It's behind you, move aside");
           }
           AlertSingleton().isAlerted[licenseNumber] = true;
+          _speakAlert();
+
+          audioPlayer.play(AssetSource('beep.mp3'));
+
+          debugPrint("Speaking");
         }
+      }
+
+      setState(() {
+        _isStickyButtonPressed = true;
       });
     });
-    return Future(() => null);
+  }
+
+  Alignment _getAlignmentFromDirection(String? direction) {
+    switch (direction) {
+      case 'north':
+        return Alignment.topCenter;
+      case 'north_east':
+        return Alignment.topRight;
+      case 'east':
+        return Alignment.centerRight;
+      case 'south_east':
+        return Alignment.bottomRight;
+      case 'south':
+        return Alignment.bottomCenter;
+      case 'south_west':
+        return Alignment.bottomLeft;
+      case 'west':
+        return Alignment.centerLeft;
+      case 'north_west':
+        return Alignment.topLeft;
+      default:
+        return Alignment.center;
+    }
   }
 
   void _startNavigation(destination) async {
@@ -327,9 +350,10 @@ class _MapPageState extends State<MapPage> {
     _moveCameraToCurrentLocation();
     socketService.setUsingNavi(true);
     Assets().showSnackBar(context, 'Navigation started.');
+    await _speak("Starting guidance");
   }
 
-  void _endNavigation() {
+  Future<void> _endNavigation() async {
     _isUsingNavi = false;
     socketService.setUsingNavi(false);
     _markers.clear();
@@ -338,6 +362,7 @@ class _MapPageState extends State<MapPage> {
     navigationData = null;
     setState(() {});
     Assets().showSnackBar(context, 'Navigation ended.');
+    await _speak("Ending guidance");
   }
 
   void _searchDestination(String value) async {
