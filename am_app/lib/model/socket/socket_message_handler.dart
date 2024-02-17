@@ -5,13 +5,11 @@ import 'package:flutter/material.dart';
 class SocketMessageHandler {
   void handleAlertMessage(Map<String, dynamic> parsedJson) {
     AlertSingleton().updateVehicleData(parsedJson);
+    debugPrint(parsedJson.toString());
   }
 
   void handleResponseMessage(Map<String, dynamic> parsedJson) {
     LocationSingleton().setMapMatchedLocation(parsedJson);
-    // debugPrint(LocationSingleton().lat.toString());
-    // debugPrint(LocationSingleton().lng.toString());
-    // debugPrint(LocationSingleton().direction.toString());
   }
 
   void handleAlertUpdateMessage(Map<String, dynamic> parsedJson) {

@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:collection';
-import 'dart:io';
 
 import 'package:am_app/model/api/dto/navigation_path.dart';
 import 'package:am_app/model/api/navigation_api.dart';
@@ -40,7 +39,7 @@ class _MapPageState extends State<MapPage> {
   GoogleMapController? _controller;
 
   final l.Location _location = l.Location();
-  l.PermissionStatus _permissionGranted = l.PermissionStatus.denied;
+  final l.PermissionStatus _permissionGranted = l.PermissionStatus.denied;
   l.LocationData _locationData =
       l.LocationData.fromMap({'latitude': 37.1234, 'longitude': 127.1234});
   late Stream<CompassModel> compassStream;
@@ -55,7 +54,7 @@ class _MapPageState extends State<MapPage> {
 
   bool _isLoaded = false;
   DateTime? lastPressed;
-  bool _serviceEnabled = false;
+  final bool _serviceEnabled = false;
   bool _isUsingNavi = false;
   bool _isSearching = false;
   bool _isStickyButtonPressed = true;
@@ -63,7 +62,7 @@ class _MapPageState extends State<MapPage> {
   final TextEditingController _searchController = TextEditingController();
   NavigationData? navigationData;
   double _gpsHeading = 0.0;
-  double _compassHeading = 0.0;
+  final double _compassHeading = 0.0;
   double _currentHeading = 0.0;
   var lastUpdatedTime = '';
 
@@ -150,36 +149,11 @@ class _MapPageState extends State<MapPage> {
     });
   }
 
-  Future<void> _initCompassListener() async {
-    compassStream = Compass().compassUpdates(
-        interval: const Duration(milliseconds: 100),
-        azimuthFix: 0,
-        currentLoc: MyLoc(
-            latitude: _locationData.latitude!,
-            longitude: _locationData.longitude!));
-
-    compassStream.listen((CompassModel compassModel) {
-      _compassHeading = compassModel.angle - 8.0;
-      if (_isStickyButtonPressed == false) {
-        _currentHeading = _compassHeading;
-      }
-      _updateUserMarker();
-    });
-  }
-
   Future<void> attachLocationUpdater() async {
     _locationSubscription =
         _location.onLocationChanged.listen((l.LocationData currentLocation) {
       setState(() {
         _gpsHeading = currentLocation.heading ?? 0;
-        // if (_gpsHeading != 0 &&
-        //     (currentLocation.headingAccuracy ?? 0) <= 15 &&
-        //     currentLocation.speed! >= 1.0) {
-        //   _currentHeading = _gpsHeading;
-        // } else {
-        //   _currentHeading = _compassHeading;
-        // }
-
         if (currentLocation.speed! * 3.6 >= 2) {
           _currentHeading = _gpsHeading;
         }
@@ -216,22 +190,6 @@ class _MapPageState extends State<MapPage> {
   Future<void> _getLocation() async {
     await _location.changeSettings(
         accuracy: l.LocationAccuracy.high, interval: 1000);
-    _serviceEnabled = await _location.serviceEnabled();
-    if (!_serviceEnabled) {
-      _serviceEnabled = await _location.requestService();
-      if (!_serviceEnabled) {
-        return;
-      }
-    }
-
-    _permissionGranted = await _location.hasPermission();
-    if (_permissionGranted == l.PermissionStatus.denied) {
-      _permissionGranted = await _location.requestPermission();
-      if (_permissionGranted != l.PermissionStatus.granted) {
-        return;
-      }
-    }
-
     _locationData = await _location.getLocation();
     _moveCameraToCurrentLocation();
   }

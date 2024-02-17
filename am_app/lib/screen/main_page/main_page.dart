@@ -4,6 +4,7 @@ import 'package:am_app/screen/asset/assets.dart';
 import 'package:am_app/screen/map/map_page.dart';
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:location/location.dart' as l;
 
 import 'package:provider/provider.dart';
 
@@ -16,6 +17,9 @@ class MainPage extends StatefulWidget {
 
 class MainPageState extends State<MainPage> {
   DateTime? lastPressed;
+  bool _serviceEnabled = false;
+  l.PermissionStatus _permissionGranted = l.PermissionStatus.denied;
+  final l.Location _location = l.Location();
 
   @override
   void initState() {
@@ -44,7 +48,8 @@ class MainPageState extends State<MainPage> {
     return Scaffold(
       body: Consumer<UserProvider>(
         builder: (context, userProvider, child) {
-          if (!userProvider.isLoaded) {
+          if (!userProvider.isLoaded ||
+              _permissionGranted == l.PermissionStatus.denied) {
             return const Center(
               child: CircularProgressIndicator(),
             );
@@ -60,6 +65,21 @@ class MainPageState extends State<MainPage> {
     PermissionStatus gpsStatus = await Permission.location.status;
     debugPrint('GPS Permission status: $gpsStatus');
 
+    if (!_serviceEnabled) {
+      _serviceEnabled = await _location.requestService();
+      if (!_serviceEnabled) {
+        return;
+      }
+    }
+
+    _permissionGranted = await _location.hasPermission();
+    if (_permissionGranted == l.PermissionStatus.denied) {
+      _permissionGranted = await _location.requestPermission();
+      if (_permissionGranted != l.PermissionStatus.granted) {
+        return;
+      }
+    }
+
     if (await Permission.location.isPermanentlyDenied) {
       Assets().showPopupWithCallback(
           context,
@@ -68,6 +88,7 @@ class MainPageState extends State<MainPage> {
     } else if (!gpsStatus.isGranted) {
       await Permission.location.request();
     }
-    
+
+    setState(() {});
   }
 }
