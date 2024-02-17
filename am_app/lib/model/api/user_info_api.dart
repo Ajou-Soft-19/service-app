@@ -32,7 +32,7 @@ class UserInfoApi extends TokenApiUtils {
       return;
     }
 
-    isResponseSuccess(response);
+    await isResponseSuccess(response);
   }
 
   Future<String> getUserInfo(UserProvider userProvider) async {

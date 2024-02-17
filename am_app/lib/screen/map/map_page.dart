@@ -284,24 +284,23 @@ class _MapPageState extends State<MapPage> {
     if (result == 1) {
       _speakAlert(); // 재귀적 호출
     } else {
-      print("Failed to generate Text-to-Speech");
+      debugPrint("Failed to generate Text-to-Speech");
     }
   }
 
   void _initVehicleDataListener() async {
     AlertSingleton().onVehicleDataUpdated.listen((licenseNumber) async {
-
-      if(AlertSingleton().pathPoints.containsKey(licenseNumber)==false){
+      if (AlertSingleton().pathPoints.containsKey(licenseNumber) == false) {
         drawAlertRoute(licenseNumber);
         return;
       }
-      if (_isUsingNavi == false || (await _mapService.doPathsIntersect(
+      if (_isUsingNavi == false ||
+          (await _mapService.doPathsIntersect(
               navigationData!.pathPoint,
               latLngToPathPoints(AlertSingleton()
                   .pathPoints[licenseNumber]!
                   .values
                   .toList())))) {
-
         LatLng? currentPathPointLatLng =
             AlertSingleton().markers[licenseNumber]?.position;
         if (currentPathPointLatLng == null) return;
@@ -333,6 +332,7 @@ class _MapPageState extends State<MapPage> {
       drawAlertRoute(licenseNumber);
     });
   }
+
   void drawAlertRoute(String licenseNumber) {
     setState(() {
       if (AlertSingleton().markers.containsKey(licenseNumber)) {
@@ -344,7 +344,7 @@ class _MapPageState extends State<MapPage> {
       // Polyline 추가
       if (AlertSingleton().polylines.containsKey(licenseNumber)) {
         _polylines.removeWhere(
-                (polyline) => polyline.polylineId.value == licenseNumber);
+            (polyline) => polyline.polylineId.value == licenseNumber);
         _polylines.add(AlertSingleton().polylines[licenseNumber]!);
       }
 
@@ -355,10 +355,11 @@ class _MapPageState extends State<MapPage> {
       }
       if (!AlertSingleton().polylines.containsKey(licenseNumber)) {
         _polylines.removeWhere(
-                (polyline) => polyline.polylineId.value == licenseNumber);
+            (polyline) => polyline.polylineId.value == licenseNumber);
       }
     });
   }
+
   Alignment _getAlignmentFromDirection(String? direction) {
     switch (direction) {
       case 'north':
@@ -706,7 +707,7 @@ class _MapPageState extends State<MapPage> {
           right: MediaQuery.of(context).size.width * 0.04,
           top: MediaQuery.of(context).size.height * 0.2,
           child: Text(
-            '${((_locationData.speed ?? 0) * 3.6).toInt()} km/h',
+            '${((_locationData.speed ?? 0) * 3.6).toInt()}',
             style: const TextStyle(
               color: Colors.black,
               fontSize: 60,
@@ -714,44 +715,44 @@ class _MapPageState extends State<MapPage> {
             ),
           ),
         ),
-        Positioned(
-          right: MediaQuery.of(context).size.width * 0.04,
-          top: MediaQuery.of(context).size.height * 0.3,
-          child: Text(
-            LocationSingleton().confidence != null
-                ? '${(LocationSingleton().confidence! * 100).toInt()} %'
-                : 'null %',
-            style: const TextStyle(
-              color: Colors.black,
-              fontSize: 60,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ),
-        Positioned(
-          right: MediaQuery.of(context).size.width * 0.04,
-          top: MediaQuery.of(context).size.height * 0.4,
-          child: Text(
-            '${(_currentHeading).toInt()} °',
-            style: const TextStyle(
-              color: Colors.black,
-              fontSize: 60,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ),
-        Positioned(
-          right: MediaQuery.of(context).size.width * 0.04,
-          top: MediaQuery.of(context).size.height * 0.5,
-          child: Text(
-            lastUpdatedTime,
-            style: const TextStyle(
-              color: Colors.black,
-              fontSize: 60,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ),
+        // Positioned(
+        //   right: MediaQuery.of(context).size.width * 0.04,
+        //   top: MediaQuery.of(context).size.height * 0.3,
+        //   child: Text(
+        //     LocationSingleton().confidence != null
+        //         ? '${(LocationSingleton().confidence! * 100).toInt()} %'
+        //         : 'null %',
+        //     style: const TextStyle(
+        //       color: Colors.black,
+        //       fontSize: 60,
+        //       fontWeight: FontWeight.bold,
+        //     ),
+        //   ),
+        // ),
+        // Positioned(
+        //   right: MediaQuery.of(context).size.width * 0.04,
+        //   top: MediaQuery.of(context).size.height * 0.4,
+        //   child: Text(
+        //     '${(_currentHeading).toInt()} °',
+        //     style: const TextStyle(
+        //       color: Colors.black,
+        //       fontSize: 60,
+        //       fontWeight: FontWeight.bold,
+        //     ),
+        //   ),
+        // ),
+        // Positioned(
+        //   right: MediaQuery.of(context).size.width * 0.04,
+        //   top: MediaQuery.of(context).size.height * 0.5,
+        //   child: Text(
+        //     lastUpdatedTime,
+        //     style: const TextStyle(
+        //       color: Colors.black,
+        //       fontSize: 60,
+        //       fontWeight: FontWeight.bold,
+        //     ),
+        //   ),
+        // ),
         !_isSearching
             ? Positioned(
                 top: _isUsingNavi ? 20 : null,

@@ -45,9 +45,18 @@ class _SignUpPageState extends State<SignUpPage> {
     super.dispose();
   }
 
-  Future<void> onCreatAccountPressed() async {
-    UserInfoApi().createAccount(_emailController.text, _passwordController.text,
-        _usernameController.text, _phoneNumberController.text);
+  Future<bool> onCreatAccountPressed() async {
+    try {
+      await UserInfoApi().createAccount(
+          _emailController.text,
+          _passwordController.text,
+          _usernameController.text,
+          _phoneNumberController.text);
+      return true;
+    } catch (e) {
+      Assets().showErrorSnackBar(context, e.toString());
+      return false;
+    }
   }
 
   InputDecoration _buildModernInputDecoration(String labelText) {
@@ -193,7 +202,14 @@ class _SignUpPageState extends State<SignUpPage> {
                                       _isLoading = true;
                                     });
                                     try {
-                                      await onCreatAccountPressed();
+                                      final result =
+                                          await onCreatAccountPressed();
+                                      if (!result) {
+                                        setState(() {
+                                          _isLoading = false;
+                                        });
+                                        return;
+                                      }
                                       Navigator.pop(context);
                                       Assets().showPopup(context,
                                           'Account created successfully. Please log in.');
