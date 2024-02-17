@@ -79,7 +79,7 @@ class _SignUpPageState extends State<SignUpPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: const CustomAppBar(title: '계정 생성하기', backButton: true),
+      appBar: const CustomAppBar(title: 'Create Account', backButton: true),
       body: Center(
         child: SingleChildScrollView(
           child: Align(
@@ -100,10 +100,10 @@ class _SignUpPageState extends State<SignUpPage> {
                           FocusScope.of(context).requestFocus(emailFocusNode);
                         },
                         controller: _usernameController,
-                        decoration: _buildModernInputDecoration('유저 이름'),
+                        decoration: _buildModernInputDecoration('Username'),
                         validator: (value) {
                           if (value == null || value.isEmpty) {
-                            return '유저 이름을 입력해주세요';
+                            return 'Enter your username';
                           }
                           return null;
                         },
@@ -117,12 +117,12 @@ class _SignUpPageState extends State<SignUpPage> {
                               .requestFocus(phoneNumberFocusNode);
                         },
                         controller: _emailController,
-                        decoration: _buildModernInputDecoration('이메일'),
+                        decoration: _buildModernInputDecoration('Email'),
                         validator: (value) {
                           if (value == null || value.isEmpty) {
-                            return '이메일을 입력해주세요.';
+                            return 'Enter your email';
                           } else if (!_emailRegex.hasMatch(value)) {
-                            return '잘못된 이메일입니다.';
+                            return 'Enter a valid email address';
                           }
                           return null;
                         },
@@ -136,10 +136,10 @@ class _SignUpPageState extends State<SignUpPage> {
                               .requestFocus(passwordFocusNode);
                         },
                         controller: _phoneNumberController,
-                        decoration: _buildModernInputDecoration('전화번호'),
+                        decoration: _buildModernInputDecoration('Phone Number'),
                         validator: (value) {
                           if (value == null || value.isEmpty) {
-                            return '전화번호를 입력해주세요';
+                            return 'Enter your phone number';
                           }
                           return null;
                         },
@@ -154,15 +154,15 @@ class _SignUpPageState extends State<SignUpPage> {
                         },
                         controller: _passwordController,
                         obscureText: true,
-                        decoration: _buildModernInputDecoration('비밀번호'),
+                        decoration: _buildModernInputDecoration('Password'),
                         validator: (value) {
                           if (value == null || value.isEmpty) {
-                            return '비밀번호 길이는 최소 8글자입니다.';
+                            return 'Enter password more than 8 characters';
                           }
                           if (value.length < 8) {
-                            return '비밀번호 길이는 최소 8글자입니다.';
+                            return 'Enter password more than 8 characters';
                           } else if (!_passwordRegex.hasMatch(value)) {
-                            return "비밀번호는 알파벳, 숫자, 특수기호를 포함해야 합니다.";
+                            return "Enter password with at least 1 letter, 1 number, and 1 special character";
                           }
                           return null;
                         },
@@ -172,10 +172,11 @@ class _SignUpPageState extends State<SignUpPage> {
                         focusNode: confirmPasswordFocusNode,
                         controller: _confirmPasswordController,
                         obscureText: true,
-                        decoration: _buildModernInputDecoration('비밀번호 확인'),
+                        decoration:
+                            _buildModernInputDecoration('Confirm Password'),
                         validator: (value) {
                           if (value != _passwordController.text) {
-                            return '비밀번호가 일치하지 않습니다.';
+                            return 'Password does not match';
                           }
                           return null;
                         },
@@ -195,10 +196,10 @@ class _SignUpPageState extends State<SignUpPage> {
                                       await onCreatAccountPressed();
                                       Navigator.pop(context);
                                       Assets().showPopup(context,
-                                          '계정이 생성되었습니다.\n 로그인을 완료해주세요.');
+                                          'Account created successfully. Please log in.');
                                     } catch (e) {
-                                      Assets()
-                                          .showPopup(context, '계정 생성에 실패했습니다.');
+                                      Assets().showPopup(context,
+                                          'Account creation failed. Please try again.');
                                     }
                                     setState(() {
                                       _isLoading = false;
@@ -227,7 +228,7 @@ class _SignUpPageState extends State<SignUpPage> {
                                   ),
                                 )
                               : const Text(
-                                  '계정 생성',
+                                  'Create Account',
                                   style: TextStyle(
                                       fontSize: 18, color: Colors.white),
                                 ),

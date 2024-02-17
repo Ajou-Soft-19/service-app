@@ -3,6 +3,7 @@ import 'package:am_app/model/provider/user_provider.dart';
 import 'package:am_app/model/provider/vehicle_provider.dart';
 import 'package:am_app/screen/admin/auth_request.dart';
 import 'package:am_app/screen/admin/monitor_page.dart';
+import 'package:am_app/screen/asset/app_bar.dart';
 import 'package:am_app/screen/asset/assets.dart';
 import 'package:am_app/screen/login/edit_user_info_page.dart';
 import 'package:am_app/screen/vehicle/vehicle_list_page.dart';
@@ -106,6 +107,10 @@ class _UserInfoPageState extends State<UserInfoPage> {
     final vehicleProvider = Provider.of<VehicleProvider>(context);
 
     return Scaffold(
+      appBar: const CustomAppBar(
+        title: 'User Info',
+        backButton: true,
+      ),
       backgroundColor: Colors.white,
       body: Center(
         child: SafeArea(
@@ -183,42 +188,42 @@ class _UserInfoPageState extends State<UserInfoPage> {
             ? _buildActionButton(
                 onPressed: () => onVehiclePressed(vehicleProvider),
                 backgroundColor: Colors.indigo,
-                text: '차량 선택',
+                text: 'Select Vehicle',
               )
             : userProvider.hasRequestedEmergencyRole()
                 ? _buildActionButton(
                     onPressed: () => onAuthorizationRequestCheck(userProvider),
                     backgroundColor: Colors.orange,
-                    text: '권한 요청 결과 확인',
+                    text: 'Check Auth Request',
                   )
                 : _buildActionButton(
                     onPressed: () => onAuthorizationRequest(userProvider),
                     backgroundColor: Colors.orange,
-                    text: '응급 차량 권한 요청',
+                    text: 'Request Emergency Auth',
                   ),
         userProvider.hasAdminRole()
             ? _buildActionButton(
                 onPressed: () => onMonitoringPressed(),
                 backgroundColor: Colors.indigo,
-                text: '모니터링 페이지',
+                text: 'Monitoring Page',
               )
             : const SizedBox(height: 0),
         userProvider.hasAdminRole()
             ? _buildActionButton(
                 onPressed: () => onAuthRequestPressed(),
                 backgroundColor: Colors.indigo,
-                text: '권한 관리 페이지',
+                text: 'Adming Auth Request Page',
               )
             : const SizedBox(height: 0),
         _buildActionButton(
           onPressed: () => onEditInfoPressed(userProvider),
           backgroundColor: Colors.blue,
-          text: '유저 정보 수정',
+          text: 'Edit Info',
         ),
         _buildActionButton(
           onPressed: () => onLogoutPressed(userProvider),
           backgroundColor: Colors.red[500]!,
-          text: '로그아웃',
+          text: 'Logout',
         ),
       ],
     );

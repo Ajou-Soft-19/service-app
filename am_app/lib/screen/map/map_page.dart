@@ -3,6 +3,7 @@ import 'dart:collection';
 import 'dart:io';
 
 import 'package:am_app/model/api/dto/navigation_path.dart';
+import 'package:am_app/model/api/navigation_api.dart';
 import 'package:am_app/model/provider/user_provider.dart';
 import 'package:am_app/model/provider/vehicle_provider.dart';
 import 'package:am_app/model/singleton/alert_singleton.dart';
@@ -17,6 +18,7 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_tts/flutter_tts.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:location/location.dart' as l;
 import 'package:google_maps_webservice/places.dart' as p;
@@ -47,6 +49,7 @@ class _MapPageState extends State<MapPage> {
 
   final _searchService = SearchService();
   final _mapService = MapService();
+  final _apiService = ApiService();
   final socketService = SocketConnector();
   int updateSync = 0;
 
@@ -74,6 +77,10 @@ class _MapPageState extends State<MapPage> {
 
   Queue<String> messageQueue = Queue<String>();
 
+  bool hasEmergencyEventRegisterAuth = false;
+  bool isWaitingForEmergency = false;
+  int? emergencyEventId;
+
   @override
   void initState() {
     super.initState();
@@ -86,16 +93,51 @@ class _MapPageState extends State<MapPage> {
     tts.getDefaultVoice;
   }
 
+  @override
+  void dispose() {
+    socketService.close();
+    _locationSubscription?.cancel();
+    _locationSingletonSubscription?.cancel();
+    _endNavigation();
+    super.dispose();
+  }
+
   void initListeners() async {
     await _getLocation();
     _initSocketListener();
-    _initCompassListener();
+    //_initCompassListener();
     await attachLocationUpdater();
     await attachUserMarkerChanger();
     _initVehicleDataListener();
+    initEmergencyVariables();
     setState(() {
       _isLoaded = true;
     });
+  }
+
+  void initEmergencyVariables() {
+    final vehicleProvider =
+        Provider.of<VehicleProvider>(context, listen: false);
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    vehicleProvider.addListener(() {
+      setEmergencyVariables(userProvider, vehicleProvider);
+    });
+    setEmergencyVariables(userProvider, vehicleProvider);
+  }
+
+  void setEmergencyVariables(
+      UserProvider userProvider, VehicleProvider vehicleProvider) {
+    if (userProvider.hasEmergencyRole() && vehicleProvider.vehicleId != null) {
+      setState(() {
+        hasEmergencyEventRegisterAuth = true;
+        isWaitingForEmergency = true;
+      });
+    } else {
+      setState(() {
+        hasEmergencyEventRegisterAuth = false;
+        isWaitingForEmergency = false;
+      });
+    }
   }
 
   Future<void> _initSocketListener() async {
@@ -130,18 +172,23 @@ class _MapPageState extends State<MapPage> {
         _location.onLocationChanged.listen((l.LocationData currentLocation) {
       setState(() {
         _gpsHeading = currentLocation.heading ?? 0;
-        if (_gpsHeading != 0 &&
-            (currentLocation.headingAccuracy ?? 0) <= 15 &&
-            currentLocation.speed! >= 1.0) {
+        // if (_gpsHeading != 0 &&
+        //     (currentLocation.headingAccuracy ?? 0) <= 15 &&
+        //     currentLocation.speed! >= 1.0) {
+        //   _currentHeading = _gpsHeading;
+        // } else {
+        //   _currentHeading = _compassHeading;
+        // }
+
+        if (currentLocation.speed! * 3.6 >= 2) {
           _currentHeading = _gpsHeading;
-        } else {
-          _currentHeading = _compassHeading;
         }
         _locationData = currentLocation;
       });
 
       socketService.setDirection(_currentHeading);
-      socketService.sendLocationData(currentLocation, null, null);
+      socketService.sendLocationData(
+          currentLocation, navigationData?.naviPathId, emergencyEventId);
     });
     return Future(() => null);
   }
@@ -164,14 +211,6 @@ class _MapPageState extends State<MapPage> {
     });
 
     return Future(() => null);
-  }
-
-  @override
-  void dispose() {
-    socketService.close();
-    _locationSubscription?.cancel();
-    _locationSingletonSubscription?.cancel();
-    super.dispose();
   }
 
   Future<void> _getLocation() async {
@@ -354,12 +393,18 @@ class _MapPageState extends State<MapPage> {
   }
 
   Future<void> _endNavigation() async {
+    if (navigationData == null) return;
     _isUsingNavi = false;
     socketService.setUsingNavi(false);
     _markers.clear();
     _polylines.clear();
     _searchController.clear();
     navigationData = null;
+    if (emergencyEventId != null) {
+      _apiService.endEmergencyEvent(
+          emergencyEventId!, Provider.of<UserProvider>(context, listen: false));
+      emergencyEventId = null;
+    }
     setState(() {});
     Assets().showSnackBar(context, 'Navigation ended.');
     await _speak("Ending guidance");
@@ -372,6 +417,7 @@ class _MapPageState extends State<MapPage> {
     } catch (e) {
       debugPrint(e.toString());
       Assets().showErrorSnackBar(context, 'Failed to search destination.');
+      _isSearching = false;
       return;
     }
     Marker marker = Marker(
@@ -431,6 +477,9 @@ class _MapPageState extends State<MapPage> {
             !_isUsingNavi ? buildSearchRow() : Container(),
             buildPlacesResults(),
             _isUsingNavi ? buildNavigationInfo(navigationData!) : Container(),
+            hasEmergencyEventRegisterAuth && !_isSearching
+                ? buildSirenButton()
+                : Container(),
           ],
         ),
       ),
@@ -724,7 +773,7 @@ class _MapPageState extends State<MapPage> {
 
   void showEndNavigationConfirm() {
     double screenWidth = MediaQuery.of(context).size.width;
-    double containerWidth = screenWidth * 0.90;
+    double containerWidth = screenWidth * 0.95;
 
     if (screenWidth > 600) {
       containerWidth = 500;
@@ -743,9 +792,9 @@ class _MapPageState extends State<MapPage> {
             builder: (BuildContext context, BoxConstraints constraints) {
               return Container(
                 width: containerWidth,
-                margin: const EdgeInsets.all(20),
+                margin: const EdgeInsets.all(10),
                 padding:
-                    const EdgeInsets.symmetric(vertical: 20, horizontal: 25),
+                    const EdgeInsets.symmetric(vertical: 20, horizontal: 0),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(20),
@@ -774,9 +823,9 @@ class _MapPageState extends State<MapPage> {
                       children: <Widget>[
                         ElevatedButton(
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.grey, // button's fill color
+                            backgroundColor: Colors.grey,
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(30),
+                              borderRadius: BorderRadius.circular(10),
                             ),
                           ),
                           onPressed: () {
@@ -795,7 +844,7 @@ class _MapPageState extends State<MapPage> {
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.red,
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(30),
+                              borderRadius: BorderRadius.circular(10),
                             ),
                           ),
                           onPressed: () {
@@ -803,7 +852,7 @@ class _MapPageState extends State<MapPage> {
                             Navigator.of(context).pop();
                           },
                           child: const Text(
-                            'Confirm',
+                            'Yes',
                             style: TextStyle(
                               color: Colors.white,
                               fontSize: 16,
@@ -936,30 +985,155 @@ class _MapPageState extends State<MapPage> {
     );
   }
 
+  Widget buildSirenButton() {
+    if (hasEmergencyEventRegisterAuth == false) {
+      return const SizedBox.shrink();
+    }
+
+    IconData iconData;
+    String text;
+    Color color;
+
+    if (isWaitingForEmergency && emergencyEventId != null) {
+      iconData = FontAwesomeIcons.triangleExclamation;
+      text = 'On Action';
+      color = Colors.red;
+    } else if (isWaitingForEmergency) {
+      iconData = FontAwesomeIcons.car;
+      text = 'Pending';
+      color = Colors.red;
+    } else {
+      iconData = FontAwesomeIcons.powerOff;
+      text = 'Off';
+      color = Colors.white;
+    }
+
+    return Positioned(
+      left: 20,
+      bottom: _isUsingNavi ? null : MediaQuery.of(context).size.height * 0.12,
+      top: _isUsingNavi ? MediaQuery.of(context).size.height * 0.12 : null,
+      child: AnimatedContainer(
+        duration: const Duration(seconds: 1),
+        curve: Curves.easeInOut,
+        decoration: BoxDecoration(
+          color: color,
+          shape: BoxShape.circle,
+        ),
+        child: FloatingActionButton.extended(
+          heroTag: 'sirenButton',
+          onPressed: () {
+            setState(() {
+              if (navigationData != null) {
+                Assets().showErrorSnackBar(context, 'End Navigation First');
+                return;
+              }
+              showDialog(
+                context: context,
+                builder: (BuildContext context) {
+                  return AlertDialog(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(5.0),
+                    ),
+                    backgroundColor: Colors.white,
+                    title: const Text(
+                      'Confirm',
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 25,
+                      ),
+                    ),
+                    content: Text(
+                      isWaitingForEmergency
+                          ? 'Do you want to turn off Emergency State?'
+                          : 'Do you want to turn on Emergency State?',
+                      style: const TextStyle(
+                        fontSize: 16.0,
+                      ),
+                    ),
+                    actions: <Widget>[
+                      TextButton(
+                        child: const Text(
+                          'Cancel',
+                          style: TextStyle(
+                            color: Colors.black,
+                            fontSize: 18,
+                          ),
+                        ),
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                        },
+                      ),
+                      TextButton(
+                        child: const Text(
+                          'OK',
+                          style: TextStyle(
+                            color: Colors.red,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18,
+                          ),
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            isWaitingForEmergency = !isWaitingForEmergency;
+                          });
+                          Navigator.of(context).pop();
+                        },
+                      ),
+                    ],
+                  );
+                },
+              );
+            });
+          },
+          icon: Icon(
+            iconData,
+            color: isWaitingForEmergency ? Colors.white : Colors.black,
+          ),
+          label: Text(
+            text,
+            style: TextStyle(
+              color: isWaitingForEmergency ? Colors.white : Colors.black,
+            ),
+          ),
+          backgroundColor: color,
+        ),
+      ),
+    );
+  }
+
   Future<bool> confirmNavigationData(
       LatLng destination, BuildContext context) async {
     List<LatLng> routePoints = [];
     p.PlacesSearchResult? place = findPlaceByLatLng(destination);
-    debugPrint(destination.toString());
+
     if (place == null) return false;
     try {
       navigationData = await Navigator.push(
         context,
         MaterialPageRoute(
-            builder: (context) => NavigationRouteConfirmPage(
-                source: LocationSingleton().getCurrentLocLatLng() ??
-                    LatLng(_locationData.latitude!, _locationData.longitude!),
-                destination: destination,
-                destinationName: place.name)),
+          builder: (context) => NavigationRouteConfirmPage(
+            source: LocationSingleton().getCurrentLocLatLng() ??
+                LatLng(_locationData.latitude!, _locationData.longitude!),
+            destination: destination,
+            destinationName: place.name,
+            hasEmergencyEventRegisterAuth: hasEmergencyEventRegisterAuth,
+            isWaitingForEmergency: isWaitingForEmergency,
+          ),
+        ),
       );
 
       if (navigationData == null) return false;
+
+      await registerEmergencyEvent(navigationData!.naviPathId);
 
       routePoints = navigationData!.pathPointsToLatLng();
     } catch (e) {
       debugPrint(e.toString());
       Assets().showErrorSnackBar(context, e.toString());
+      return false;
     }
+
     Polyline route = await _mapService.drawRoute(routePoints,
         id: 'route_confirmed', width: 8);
 
@@ -968,6 +1142,28 @@ class _MapPageState extends State<MapPage> {
     });
 
     return true;
+  }
+
+  Future<void> registerEmergencyEvent(int? navigationPahtId) async {
+    if (hasEmergencyEventRegisterAuth == false ||
+        isWaitingForEmergency == false) return Future(() => null);
+    if (navigationPahtId == null) {
+      throw Exception('Navigation Path Id is null');
+    }
+    final vehicleProvider =
+        Provider.of<VehicleProvider>(context, listen: false);
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    int vehicleId = int.parse(vehicleProvider.vehicleId!);
+
+    try {
+      emergencyEventId = await _apiService.registerEmergencyEvent(
+          vehicleId, navigationPahtId, userProvider);
+    } catch (e) {
+      throw Exception('Error occurred in registerEmergencyEvent: $e');
+    }
+
+    debugPrint('Emergency Event Id: $emergencyEventId');
+    return Future(() => null);
   }
 
   p.PlacesSearchResult? findPlaceByLatLng(LatLng destination) {

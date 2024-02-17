@@ -19,7 +19,7 @@ class _LoginPageState extends State<LoginPage> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final userProvider = Provider.of<UserProvider>(context, listen: false);
       if (userProvider.isLoginExpired) {
-        Assets().showErrorSnackBar(context, "로그인 토큰이 만료되었습니다. 다시 로그인해주세요.");
+        Assets().showErrorSnackBar(context, "Login Expired");
         userProvider.updateLoginExpired(false, false);
       }
     });
@@ -28,7 +28,7 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: const CustomAppBar(title: "로그인", backButton: true),
+      appBar: const CustomAppBar(title: "Login", backButton: true),
       body: Center(
         child: SingleChildScrollView(
           child: Column(
@@ -83,7 +83,7 @@ class _LoginPageState extends State<LoginPage> {
                       Icon(Icons.mail_outline, size: 25, color: Colors.black),
                       SizedBox(width: 70),
                       Text(
-                        '이메일로 로그인',
+                        'Login with Email',
                         textAlign: TextAlign.center,
                         style: TextStyle(color: Colors.black),
                       ),

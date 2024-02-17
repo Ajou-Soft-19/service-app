@@ -84,7 +84,7 @@ class _IdPwLoginPageState extends State<IdPwLoginPage> {
     final userProvider = Provider.of<UserProvider>(context);
     return Scaffold(
       appBar: const CustomAppBar(
-        title: '로그인',
+        title: 'Login',
         backButton: true,
       ),
       backgroundColor: Colors.white,
@@ -101,7 +101,7 @@ class _IdPwLoginPageState extends State<IdPwLoginPage> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     const Text(
-                      '로그인',
+                      'Login',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 32,
@@ -135,7 +135,7 @@ class _IdPwLoginPageState extends State<IdPwLoginPage> {
                                 onEditingComplete: () => FocusScope.of(context)
                                     .requestFocus(myFocusNode),
                                 decoration: InputDecoration(
-                                  labelText: '이메일',
+                                  labelText: 'Email',
                                   labelStyle: const TextStyle(fontSize: 18),
                                   contentPadding:
                                       const EdgeInsets.fromLTRB(20, 10, 20, 10),
@@ -149,11 +149,11 @@ class _IdPwLoginPageState extends State<IdPwLoginPage> {
                                 keyboardType: TextInputType.emailAddress,
                                 validator: (value) {
                                   if (value == null || value.isEmpty) {
-                                    return '이메일을 입력해주세요';
+                                    return 'Enter an email address';
                                   }
                                   RegExp regex = RegExp(pattern as String);
                                   if (!regex.hasMatch(value)) {
-                                    return '이메일 형식이 올바르지 않습니다';
+                                    return 'Enter a valid email address';
                                   }
                                   return null;
                                 },
@@ -167,7 +167,7 @@ class _IdPwLoginPageState extends State<IdPwLoginPage> {
                               TextFormField(
                                 focusNode: myFocusNode,
                                 decoration: InputDecoration(
-                                  labelText: '비밀번호',
+                                  labelText: 'Password',
                                   labelStyle: const TextStyle(fontSize: 18),
                                   contentPadding:
                                       const EdgeInsets.fromLTRB(20, 10, 20, 10),
@@ -181,7 +181,7 @@ class _IdPwLoginPageState extends State<IdPwLoginPage> {
                                 obscureText: true,
                                 validator: (value) {
                                   if (value == null || value.isEmpty) {
-                                    return '비밀번호를 입력해주세요';
+                                    return 'Enter valid password';
                                   }
                                   return null;
                                 },
@@ -232,7 +232,7 @@ class _IdPwLoginPageState extends State<IdPwLoginPage> {
                                           ),
                                         )
                                       : Text(
-                                          '로그인',
+                                          'Login',
                                           style: TextStyle(
                                               fontSize: 18,
                                               color: Colors.lightBlue.shade900),
@@ -255,7 +255,7 @@ class _IdPwLoginPageState extends State<IdPwLoginPage> {
                       child: const Padding(
                         padding: EdgeInsets.all(8.0),
                         child: Text(
-                          '계정이 없으신가요?',
+                          'Sign Up',
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             fontSize: 18,

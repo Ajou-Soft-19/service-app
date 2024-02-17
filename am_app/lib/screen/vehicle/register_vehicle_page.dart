@@ -24,7 +24,7 @@ class _RegisterVehiclePageState extends State<RegisterVehiclePage> {
     return DropdownButtonFormField<String>(
       value: _countryCode,
       decoration: const InputDecoration(
-        labelText: '국가 코드',
+        labelText: 'National Code',
         prefixIcon: Icon(Icons.flag),
       ),
       items: const [
@@ -34,7 +34,7 @@ class _RegisterVehiclePageState extends State<RegisterVehiclePage> {
         ),
         DropdownMenuItem(
           value: 'en-US',
-          child: Text('미국'),
+          child: Text('United States'),
         ),
       ],
       onChanged: (value) {
@@ -44,7 +44,7 @@ class _RegisterVehiclePageState extends State<RegisterVehiclePage> {
       },
       validator: (value) {
         if (value == null) {
-          return '국가 코드를 선택해주세요.';
+          return 'Please select a country code.';
         }
         return null;
       },
@@ -55,45 +55,45 @@ class _RegisterVehiclePageState extends State<RegisterVehiclePage> {
     return DropdownButtonFormField<String>(
       value: _vehicleType,
       decoration: const InputDecoration(
-        labelText: '차량 유형',
+        labelText: 'Vehicle Type',
         prefixIcon: Icon(Icons.directions_car),
       ),
       items: const [
         DropdownMenuItem(
-          value: 'LIGHTWEIGHT_CAR',
-          child: Text('1종 경형자동차'),
-        ),
-        DropdownMenuItem(
-          value: 'SMALL_CAR',
-          child: Text('1종 소형차'),
-        ),
-        DropdownMenuItem(
-          value: 'MEDIUM_CAR',
-          child: Text('2종 중형차'),
-        ),
-        DropdownMenuItem(
-          value: 'LARGE_CAR',
-          child: Text('3종 대형차'),
-        ),
-        DropdownMenuItem(
-          value: 'LARGE_TRUCK',
-          child: Text('4종 대형화물차'),
-        ),
-        DropdownMenuItem(
-          value: 'SPECIAL_TRUCK',
-          child: Text('5종 특수화물차'),
-        ),
-        DropdownMenuItem(
           value: 'AMBULANCE',
-          child: Text('구급차'),
+          child: Text('AMBULANCE'),
         ),
         DropdownMenuItem(
           value: 'FIRE_TRUCK_MEDIUM',
-          child: Text('소방차 중형'),
+          child: Text('FIRE_TRUCK_MEDIUM'),
         ),
         DropdownMenuItem(
           value: 'FIRE_TRUCK_LARGE',
-          child: Text('소방차 대형'),
+          child: Text('FIRE_TRUCK_LARGE'),
+        ),
+        DropdownMenuItem(
+          value: 'LIGHTWEIGHT_CAR',
+          child: Text('LIGHTWEIGHT_CAR'),
+        ),
+        DropdownMenuItem(
+          value: 'SMALL_CAR',
+          child: Text('SMALL_CAR'),
+        ),
+        DropdownMenuItem(
+          value: 'MEDIUM_CAR',
+          child: Text('MEDIUM_CAR'),
+        ),
+        DropdownMenuItem(
+          value: 'LARGE_CAR',
+          child: Text('LARGE_CAR'),
+        ),
+        DropdownMenuItem(
+          value: 'LARGE_TRUCK',
+          child: Text('LARGE_TRUCK'),
+        ),
+        DropdownMenuItem(
+          value: 'SPECIAL_TRUCK',
+          child: Text('SPECIAL_TRUCK'),
         ),
       ],
       onChanged: (value) {
@@ -103,7 +103,7 @@ class _RegisterVehiclePageState extends State<RegisterVehiclePage> {
       },
       validator: (value) {
         if (value == null) {
-          return '차량 유형을 선택해주세요.';
+          return 'Please select a vehicle type.';
         }
         return null;
       },
@@ -113,7 +113,7 @@ class _RegisterVehiclePageState extends State<RegisterVehiclePage> {
   TextFormField buildLicenseNumberField() {
     return TextFormField(
       decoration: const InputDecoration(
-        labelText: '차량 번호',
+        labelText: 'License Number',
         prefixIcon: Icon(Icons.format_list_numbered),
       ),
       onChanged: (value) {
@@ -121,7 +121,7 @@ class _RegisterVehiclePageState extends State<RegisterVehiclePage> {
       },
       validator: (value) {
         if (value == null || value.isEmpty) {
-          return '차량 번호를 입력해주세요.';
+          return 'Please enter a license number.';
         }
         return null;
       },
@@ -134,7 +134,7 @@ class _RegisterVehiclePageState extends State<RegisterVehiclePage> {
     final height = MediaQuery.of(context).size.height;
     return Scaffold(
       appBar: const CustomAppBar(
-        title: '차량 정보 등록',
+        title: 'Register',
         backButton: true,
       ),
       body: Center(
@@ -183,7 +183,7 @@ class _RegisterVehiclePageState extends State<RegisterVehiclePage> {
                             horizontal: 50, vertical: 10),
                       ),
                       child: const Text(
-                        '차량 등록',
+                        'Register',
                         style: TextStyle(fontSize: 18),
                       ),
                     ),
