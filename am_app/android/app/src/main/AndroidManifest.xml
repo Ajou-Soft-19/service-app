@@ -8,7 +8,7 @@
         </intent>
     </queries>
     <application
-        android:label="am_app"
+        android:label="EPAS"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <meta-data android:name="com.google.android.geo.API_KEY"
