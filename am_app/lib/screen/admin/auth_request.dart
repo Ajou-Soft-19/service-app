@@ -3,6 +3,7 @@ import 'package:am_app/model/api/dto/auth_request_info.dart';
 import 'package:am_app/model/provider/user_provider.dart';
 import 'package:am_app/screen/asset/assets.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 class AuthManagePagState extends StatefulWidget {
@@ -23,10 +24,19 @@ class _AuthManagePagStateState extends State<AuthManagePagState> {
   bool onlyPending = false;
   String emailFilter = '';
   final TextEditingController emailController = TextEditingController();
+  Orientation? _originalOrientation;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _originalOrientation = MediaQuery.of(context).orientation;
+    });
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.landscapeLeft,
+      DeviceOrientation.landscapeRight,
+    ]);
+
     emailController.addListener(() {
       setState(() {
         emailFilter = emailController.text;
@@ -37,6 +47,17 @@ class _AuthManagePagStateState extends State<AuthManagePagState> {
 
   @override
   void dispose() {
+    if (_originalOrientation == Orientation.portrait) {
+      SystemChrome.setPreferredOrientations([
+        DeviceOrientation.portraitUp,
+        DeviceOrientation.portraitDown,
+      ]);
+    } else {
+      SystemChrome.setPreferredOrientations([
+        DeviceOrientation.landscapeLeft,
+        DeviceOrientation.landscapeRight,
+      ]);
+    }
     emailController.dispose();
     super.dispose();
   }

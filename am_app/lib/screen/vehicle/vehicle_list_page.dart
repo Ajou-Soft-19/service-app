@@ -73,24 +73,25 @@ class _VehicleListPageState extends State<VehicleListPage> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text("차량 삭제"),
-          content: const Text("정말로 이 차량을 삭제하시겠습니까?"),
+          title: const Text("Delete Vehicle"),
+          content: const Text("Are you sure you want to delete this vehicle?"),
           actions: <Widget>[
             TextButton(
-              child: const Text("취소"),
+              child: const Text("Cancel"),
               onPressed: () {
                 Navigator.of(context).pop();
                 Navigator.of(context).pop();
               },
             ),
             TextButton(
-              child: const Text("삭제", style: TextStyle(color: Colors.red)),
+              child: const Text("Confirm", style: TextStyle(color: Colors.red)),
               onPressed: () async {
                 try {
                   if (vehicleProvider.vehicleId != null &&
                       vehicle.vehicleId ==
                           int.parse(vehicleProvider.vehicleId!)) {
-                    throw Exception('현재 선택된 차량은 삭제할 수 없습니다.');
+                    throw Exception(
+                        'Cannot delete selected vehicle.\nUnselect the vehicle first.');
                   }
 
                   sleep(const Duration(milliseconds: 300));
@@ -120,15 +121,16 @@ class _VehicleListPageState extends State<VehicleListPage> {
         children: <Widget>[
           ListTile(
             leading: const Icon(Icons.edit),
-            title: const Text('수정'),
+            title: const Text('Edit'),
             onTap: () {
-              Assets().showErrorSnackBar(context, '수정 기능은 아직 지원하지 않습니다.');
+              Assets()
+                  .showErrorSnackBar(context, 'Edit is not implemented yet.');
               Navigator.of(context).pop();
             },
           ),
           ListTile(
             leading: const Icon(Icons.delete),
-            title: const Text('삭제'),
+            title: const Text('Delete'),
             onTap: () {
               onDelete(vehicle, vehicleProvider, userProvider);
             },
@@ -149,7 +151,7 @@ class _VehicleListPageState extends State<VehicleListPage> {
     final UserProvider userProvider = Provider.of<UserProvider>(context);
     return Scaffold(
       appBar: const CustomAppBar(
-        title: '차량 목록',
+        title: 'Vehicle List',
         backButton: true,
       ),
       body: isLoading
@@ -211,7 +213,7 @@ class _VehicleListPageState extends State<VehicleListPage> {
                             child: ListTile(
                               leading: const Icon(Icons.add,
                                   color: Colors.blue, size: 40),
-                              title: const Text('차량 추가',
+                              title: const Text('Register Vehicle',
                                   style: TextStyle(
                                       fontSize: 20,
                                       fontWeight: FontWeight.bold)),

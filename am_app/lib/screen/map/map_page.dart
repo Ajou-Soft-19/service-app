@@ -14,6 +14,7 @@ import 'package:am_app/screen/login/setting_page.dart';
 import 'package:am_app/screen/map/navigation_route_confirm_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:location/location.dart' as l;
 import 'package:google_maps_webservice/places.dart' as p;
@@ -82,6 +83,7 @@ class _MapPageState extends State<MapPage> {
     socketService.close();
     _locationSubscription?.cancel();
     _locationSingletonSubscription?.cancel();
+    _endNavigation();
     super.dispose();
   }
 
@@ -163,7 +165,7 @@ class _MapPageState extends State<MapPage> {
         //   _currentHeading = _compassHeading;
         // }
 
-        if (currentLocation.speed! * 3.6 >= 1.5) {
+        if (currentLocation.speed! * 3.6 >= 2) {
           _currentHeading = _gpsHeading;
         }
         _locationData = currentLocation;
@@ -336,6 +338,7 @@ class _MapPageState extends State<MapPage> {
   }
 
   void _endNavigation() {
+    if (navigationData == null) return;
     _isUsingNavi = false;
     socketService.setUsingNavi(false);
     _markers.clear();
@@ -358,6 +361,7 @@ class _MapPageState extends State<MapPage> {
     } catch (e) {
       debugPrint(e.toString());
       Assets().showErrorSnackBar(context, 'Failed to search destination.');
+      _isSearching = false;
       return;
     }
     Marker marker = Marker(
@@ -930,25 +934,114 @@ class _MapPageState extends State<MapPage> {
       return const SizedBox.shrink();
     }
 
+    IconData iconData;
+    String text;
+    Color color;
+
+    if (isWaitingForEmergency && emergencyEventId != null) {
+      iconData = FontAwesomeIcons.triangleExclamation;
+      text = 'On Action';
+      color = Colors.red;
+    } else if (isWaitingForEmergency) {
+      iconData = FontAwesomeIcons.car;
+      text = 'Pending';
+      color = Colors.red;
+    } else {
+      iconData = FontAwesomeIcons.powerOff;
+      text = 'Off';
+      color = Colors.white;
+    }
+
     return Positioned(
       left: 20,
       bottom: _isUsingNavi ? null : MediaQuery.of(context).size.height * 0.12,
       top: _isUsingNavi ? MediaQuery.of(context).size.height * 0.12 : null,
-      child: FloatingActionButton(
-        heroTag: 'sirenButton',
-        onPressed: () {
-          setState(() {
-            if (navigationData != null) {
-              Assets().showErrorSnackBar(context, 'End Navigation First');
-              return;
-            }
-
-            isWaitingForEmergency = !isWaitingForEmergency;
-          });
-        },
-        backgroundColor: isWaitingForEmergency ? Colors.red : Colors.white,
-        child: Icon(Icons.warning,
-            color: isWaitingForEmergency ? Colors.white : Colors.red),
+      child: AnimatedContainer(
+        duration: const Duration(seconds: 1),
+        curve: Curves.easeInOut,
+        decoration: BoxDecoration(
+          color: color,
+          shape: BoxShape.circle,
+        ),
+        child: FloatingActionButton.extended(
+          heroTag: 'sirenButton',
+          onPressed: () {
+            setState(() {
+              if (navigationData != null) {
+                Assets().showErrorSnackBar(context, 'End Navigation First');
+                return;
+              }
+              showDialog(
+                context: context,
+                builder: (BuildContext context) {
+                  return AlertDialog(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(5.0),
+                    ),
+                    backgroundColor: Colors.white,
+                    title: const Text(
+                      'Confirm',
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 25,
+                      ),
+                    ),
+                    content: Text(
+                      isWaitingForEmergency
+                          ? 'Do you want to turn off Emergency State?'
+                          : 'Do you want to turn on Emergency State?',
+                      style: const TextStyle(
+                        fontSize: 16.0,
+                      ),
+                    ),
+                    actions: <Widget>[
+                      TextButton(
+                        child: const Text(
+                          'Cancel',
+                          style: TextStyle(
+                            color: Colors.black,
+                            fontSize: 18,
+                          ),
+                        ),
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                        },
+                      ),
+                      TextButton(
+                        child: const Text(
+                          'OK',
+                          style: TextStyle(
+                            color: Colors.red,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18,
+                          ),
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            isWaitingForEmergency = !isWaitingForEmergency;
+                          });
+                          Navigator.of(context).pop();
+                        },
+                      ),
+                    ],
+                  );
+                },
+              );
+            });
+          },
+          icon: Icon(
+            iconData,
+            color: isWaitingForEmergency ? Colors.white : Colors.black,
+          ),
+          label: Text(
+            text,
+            style: TextStyle(
+              color: isWaitingForEmergency ? Colors.white : Colors.black,
+            ),
+          ),
+          backgroundColor: color,
+        ),
       ),
     );
   }
