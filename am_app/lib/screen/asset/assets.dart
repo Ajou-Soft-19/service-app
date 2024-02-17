@@ -167,28 +167,15 @@ class Assets {
         builder: (context) => Stack(
               children: [
                 Padding(
-                  padding: const EdgeInsets.all(100),
+                  padding: const EdgeInsetsDirectional.fromSTEB(20, 80, 20, 100),
                   child: Align(
                       alignment: alignment,
                       child: const IgnorePointer(
                           ignoring: true,
                           child: Icon(Icons.warning,
-                              size: 100, color: Colors.red))),
+                              size: 80, color: Colors.red))),
                 ),
-                Positioned(
-                    bottom: 20.0,
-                    child: IgnorePointer(
-                        ignoring: true,
-                        child: Container(
-                            alignment: Alignment.center,
-                            width: MediaQuery.of(context).size.width,
-                            child: Text(
-                              'Emergency Car From the $direction\nSlow Down and Move Aside!',
-                              style: const TextStyle(
-                                  color: Colors.red,
-                                  fontSize: 28,
-                                  fontWeight: FontWeight.bold),
-                            ))))
+
               ],
             ));
     Overlay.of(context).insert(overlayEntry);
