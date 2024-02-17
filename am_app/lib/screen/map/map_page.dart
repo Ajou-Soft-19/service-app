@@ -290,34 +290,17 @@ class _MapPageState extends State<MapPage> {
 
   void _initVehicleDataListener() async {
     AlertSingleton().onVehicleDataUpdated.listen((licenseNumber) async {
+
+      if(AlertSingleton().pathPoints.containsKey(licenseNumber)==false){
+        drawAlertRoute(licenseNumber);
+        return;
+      }
       if (_isUsingNavi == false || (await _mapService.doPathsIntersect(
               navigationData!.pathPoint,
               latLngToPathPoints(AlertSingleton()
                   .pathPoints[licenseNumber]!
                   .values
                   .toList())))) {
-        if (AlertSingleton().markers.containsKey(licenseNumber)) {
-          _markers
-              .removeWhere((marker) => marker.markerId.value == licenseNumber);
-          _markers.add(AlertSingleton().markers[licenseNumber]!);
-        }
-
-        // Polyline 추가
-        if (AlertSingleton().polylines.containsKey(licenseNumber)) {
-          _polylines.removeWhere(
-              (polyline) => polyline.polylineId.value == licenseNumber);
-          _polylines.add(AlertSingleton().polylines[licenseNumber]!);
-        }
-
-        // Marker와 Polyline 삭제
-        if (!AlertSingleton().markers.containsKey(licenseNumber)) {
-          _markers
-              .removeWhere((marker) => marker.markerId.value == licenseNumber);
-        }
-        if (!AlertSingleton().polylines.containsKey(licenseNumber)) {
-          _polylines.removeWhere(
-              (polyline) => polyline.polylineId.value == licenseNumber);
-        }
 
         LatLng? currentPathPointLatLng =
             AlertSingleton().markers[licenseNumber]?.position;
@@ -347,13 +330,35 @@ class _MapPageState extends State<MapPage> {
           debugPrint("Speaking");
         }
       }
-
-      setState(() {
-        _isStickyButtonPressed = true;
-      });
+      drawAlertRoute(licenseNumber);
     });
   }
+  void drawAlertRoute(String licenseNumber) {
+    setState(() {
+      if (AlertSingleton().markers.containsKey(licenseNumber)) {
+        _markers
+            .removeWhere((marker) => marker.markerId.value == licenseNumber);
+        _markers.add(AlertSingleton().markers[licenseNumber]!);
+      }
 
+      // Polyline 추가
+      if (AlertSingleton().polylines.containsKey(licenseNumber)) {
+        _polylines.removeWhere(
+                (polyline) => polyline.polylineId.value == licenseNumber);
+        _polylines.add(AlertSingleton().polylines[licenseNumber]!);
+      }
+
+      // Marker와 Polyline 삭제
+      if (!AlertSingleton().markers.containsKey(licenseNumber)) {
+        _markers
+            .removeWhere((marker) => marker.markerId.value == licenseNumber);
+      }
+      if (!AlertSingleton().polylines.containsKey(licenseNumber)) {
+        _polylines.removeWhere(
+                (polyline) => polyline.polylineId.value == licenseNumber);
+      }
+    });
+  }
   Alignment _getAlignmentFromDirection(String? direction) {
     switch (direction) {
       case 'north':
