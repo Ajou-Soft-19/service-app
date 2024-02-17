@@ -1141,7 +1141,7 @@ class _MapPageState extends State<MapPage> {
     }
 
     Polyline route = await _mapService.drawRoute(routePoints,
-        id: 'route_confirmed', width: 8);
+        id: 'route_confirmed', width: 10);
 
     setState(() {
       _polylines.add(route);

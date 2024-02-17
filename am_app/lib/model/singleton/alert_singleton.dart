@@ -1,8 +1,12 @@
 import 'dart:async';
 import 'dart:math';
 
+import 'package:am_app/screen/image_resize.dart';
 import 'package:am_app/screen/map/map_service.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:am_app/screen/asset/assets.dart';
 
 import '../api/dto/alert_info.dart';
 
@@ -14,6 +18,7 @@ class AlertSingleton {
   Map<String, Marker> markers = {}; // 차량 번호에 따른 마커
   Map<String, Polyline> polylines = {}; // 차량 번호에 따른 폴리라인 (경로선)
   Map<String, bool> isAlerted = {};
+  Map<String, String> vehicleType = {};
 
   final _controller = StreamController<String>.broadcast();
 
@@ -35,9 +40,13 @@ class AlertSingleton {
             index, LatLng(point.location.latitude, point.location.longitude)));
     currentPathPoint[licenseNumber] = currentPathPointData;
     pathPoints[licenseNumber] = pathPointsData;
+    debugPrint(data.toString());
+    vehicleType[licenseNumber] = emergencyPathData.vehicleType;
+    BitmapDescriptor descriptor = await getBitmapBasedOnVehicleType(vehicleType[licenseNumber]!); // 비동기 작업의 완료를 기다려 BitmapDescriptor 값을 얻어옴
     markers[licenseNumber] = Marker(
       markerId: MarkerId(licenseNumber),
       position: pathPoints[licenseNumber]![currentPathPointData]!,
+      icon: descriptor,
     );
     List<LatLng>? emergencyPathList =
         pathPoints[licenseNumber]?.values.toList();
@@ -47,15 +56,16 @@ class AlertSingleton {
     _controller.sink.add(licenseNumber);
   }
 
-  void updateVehicleDataByUpdateAlert(Map<String, dynamic> parsedJson) {
+  Future<void> updateVehicleDataByUpdateAlert(Map<String, dynamic> parsedJson) async {
     Map<String, dynamic> data = parsedJson['data'];
     String licenseNumber = data['licenseNumber'];
     double lat = data['latitude'];
     double lng = data['longitude'];
-
+    BitmapDescriptor descriptor = await getBitmapBasedOnVehicleType(vehicleType[licenseNumber]!);
     markers[licenseNumber] = Marker(
       markerId: MarkerId(licenseNumber),
       position: LatLng(lat, lng),
+      icon: descriptor,
     );
     _controller.sink.add(licenseNumber);
   }
@@ -122,6 +132,18 @@ class AlertSingleton {
       return 'north_west';
     } else {
       return 'unknown';
+    }
+  }
+
+  Future<BitmapDescriptor> getBitmapBasedOnVehicleType(String vehicleType) {
+    switch (vehicleType) {
+      case 'AMBULANCE':
+        return getBitmapDescriptorFromAssetBytes('assets/star.png', 110);
+      case 'FIRE_TRUCK_MEDIUM':
+      case 'FIRE_TRUCK_LARGE':
+        return getBitmapDescriptorFromAssetBytes('assets/fire-truck.png', 110);
+      default:
+        return getBitmapDescriptorFromAssetBytes('assets/star.png', 110);
     }
   }
 }
