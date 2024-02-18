@@ -22,7 +22,6 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:location/location.dart' as l;
 import 'package:google_maps_webservice/places.dart' as p;
 import 'package:provider/provider.dart';
-import 'package:smooth_compass/utils/smooth_compass.dart';
 import 'package:smooth_compass/utils/src/compass_ui.dart';
 import 'custom_google_map.dart';
 import 'search_service.dart';
@@ -52,9 +51,7 @@ class _MapPageState extends State<MapPage> {
   final socketService = SocketConnector();
   int updateSync = 0;
 
-  bool _isLoaded = false;
   DateTime? lastPressed;
-  final bool _serviceEnabled = false;
   bool _isUsingNavi = false;
   bool _isSearching = false;
   bool _isStickyButtonPressed = true;
@@ -62,7 +59,6 @@ class _MapPageState extends State<MapPage> {
   final TextEditingController _searchController = TextEditingController();
   NavigationData? navigationData;
   double _gpsHeading = 0.0;
-  final double _compassHeading = 0.0;
   double _currentHeading = 0.0;
   var lastUpdatedTime = '';
 
@@ -109,9 +105,6 @@ class _MapPageState extends State<MapPage> {
     await attachUserMarkerChanger();
     _initVehicleDataListener();
     initEmergencyVariables();
-    setState(() {
-      _isLoaded = true;
-    });
   }
 
   void initEmergencyVariables() {
@@ -154,7 +147,7 @@ class _MapPageState extends State<MapPage> {
         _location.onLocationChanged.listen((l.LocationData currentLocation) {
       setState(() {
         _gpsHeading = currentLocation.heading ?? 0;
-        if (currentLocation.speed! * 3.6 >= 2) {
+        if (currentLocation.speed! * 3.6 >= 3) {
           _currentHeading = _gpsHeading;
         }
         _locationData = currentLocation;
@@ -189,8 +182,9 @@ class _MapPageState extends State<MapPage> {
 
   Future<void> _getLocation() async {
     await _location.changeSettings(
-        accuracy: l.LocationAccuracy.high, interval: 1000);
+        accuracy: l.LocationAccuracy.high, interval: 1000, distanceFilter: 5);
     _locationData = await _location.getLocation();
+    _updateUserMarker();
     _moveCameraToCurrentLocation();
   }
 
