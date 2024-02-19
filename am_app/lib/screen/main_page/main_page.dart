@@ -82,9 +82,7 @@ class MainPageState extends State<MainPage> {
 
     if (await Permission.location.isPermanentlyDenied) {
       Assets().showPopupWithCallback(
-          context,
-          "GPS 권한이 없으면 위치 기반 서비스를 이용할 수 없습니다. 설정에서 GPS 권한을 허용해주세요.",
-          openAppSettings);
+          context, "GPS Permission Required", openAppSettings);
     } else if (!gpsStatus.isGranted) {
       await Permission.location.request();
     }

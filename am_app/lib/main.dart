@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:am_app/model/provider/user_provider.dart';
 import 'package:am_app/model/provider/vehicle_provider.dart';
 import 'package:am_app/screen/main_page/main_page.dart';
@@ -25,7 +27,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Moses\' Miracle',
+      title: 'EPAS',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
           seedColor: const Color.fromARGB(255, 17, 0, 255),

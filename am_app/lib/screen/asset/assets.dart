@@ -30,7 +30,7 @@ class Assets {
                   child: TextButton(
                     onPressed: () => Navigator.of(context).pop(),
                     child: const Text(
-                      '확인',
+                      'Confirm',
                       style: TextStyle(color: Colors.blue),
                     ),
                   ),
@@ -76,7 +76,7 @@ class Assets {
                       callback();
                     },
                     child: const Text(
-                      '권한 설정하기',
+                      'Add Permission',
                       style: TextStyle(color: Colors.blue),
                     ),
                   ),
@@ -167,7 +167,8 @@ class Assets {
         builder: (context) => Stack(
               children: [
                 Padding(
-                  padding: const EdgeInsetsDirectional.fromSTEB(20, 80, 20, 100),
+                  padding:
+                      const EdgeInsetsDirectional.fromSTEB(20, 80, 20, 100),
                   child: Align(
                       alignment: alignment,
                       child: const IgnorePointer(
@@ -175,7 +176,6 @@ class Assets {
                           child: Icon(Icons.warning,
                               size: 80, color: Colors.red))),
                 ),
-
               ],
             ));
     Overlay.of(context).insert(overlayEntry);

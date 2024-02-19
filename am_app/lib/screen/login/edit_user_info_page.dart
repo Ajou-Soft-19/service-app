@@ -27,7 +27,7 @@ class _EditUserInfoPageState extends State<EditUserInfoPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('유저 정보 수정'),
+        title: const Text('Edit User Info'),
       ),
       body: Padding(
         padding: const EdgeInsets.all(20),
@@ -38,7 +38,7 @@ class _EditUserInfoPageState extends State<EditUserInfoPage> {
               TextFormField(
                 controller: usernameEditingController,
                 decoration: InputDecoration(
-                  labelText: '닉네임',
+                  labelText: 'Nickname',
                   hintText: widget.userProvider.username,
                   contentPadding:
                       const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
@@ -64,9 +64,9 @@ class _EditUserInfoPageState extends State<EditUserInfoPage> {
                 },
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return '닉네임을 입력해주세요';
+                    return 'Please enter your nickname.';
                   } else if (value.length > 10) {
-                    return '닉네임은 10 글자보다 작아야 합니다.';
+                    return 'Nickname must be less than 10 characters.';
                   }
                   return null;
                 },
@@ -83,12 +83,12 @@ class _EditUserInfoPageState extends State<EditUserInfoPage> {
                         widget.userProvider.updateUsername(newUsername);
                       });
                     } catch (e) {
-                      return Assets()
-                          .showErrorSnackBar(context, "회원 이름 업데이트에 실패했습니다.");
+                      return Assets().showErrorSnackBar(
+                          context, "Failed to update username.");
                     }
                   }
                 },
-                child: const Text('저장'),
+                child: const Text('save'),
               ),
             ],
           ),

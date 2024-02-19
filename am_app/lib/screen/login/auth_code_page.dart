@@ -64,19 +64,19 @@ class _AuthCodePageState extends State<AuthCodePage> {
           await _emailVerifyApi.authEmail(widget.email, _controller.text);
       if (!result) {
         _errorMessageColor = Colors.red;
-        _errorMessage = "잘못되거나 만료된 인증코드";
+        _errorMessage = "Wrong code. Please try again.";
       } else {
         completeLogin();
       }
     } on TimeoutException {
       setState(() {
         _errorMessageColor = Colors.red;
-        _errorMessage = "서버와 연결에 실패했습니다.";
+        _errorMessage = "Failed to connect to the server.";
       });
     } catch (e) {
       setState(() {
         _errorMessageColor = Colors.red;
-        _errorMessage = "예기치 못한 오류가 발생했습니다.";
+        _errorMessage = "Failed to verify the code. Please try again.";
       });
     }
 
@@ -90,17 +90,17 @@ class _AuthCodePageState extends State<AuthCodePage> {
       await _emailVerifyApi.resendAuthEmail(widget.email);
       setState(() {
         _errorMessageColor = Colors.blue;
-        _errorMessage = "인증 코드가 재발급되었습니다.";
+        _errorMessage = "Auth code has been resent.";
       });
     } on TimeoutException {
       setState(() {
         _errorMessageColor = Colors.red;
-        _errorMessage = "서버와 연결에 실패했습니다.";
+        _errorMessage = "Failed to connect to the server.";
       });
     } catch (e) {
       setState(() {
         _errorMessageColor = Colors.red;
-        _errorMessage = "인증 코드 재발급에 실패했습니다.";
+        _errorMessage = "Failed to resend the auth code. Please try again.";
       });
     }
   }
@@ -129,7 +129,7 @@ class _AuthCodePageState extends State<AuthCodePage> {
               style: const TextStyle(color: Colors.red, fontSize: 16),
             ),
             const Text(
-              '인증 코드',
+              'Auth Code',
               style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 32),
@@ -184,7 +184,7 @@ class _AuthCodePageState extends State<AuthCodePage> {
                   ),
                 ),
                 child: const Text(
-                  '제출',
+                  'Submit',
                   style: TextStyle(fontSize: 20, color: Colors.white),
                 ),
               ),
@@ -192,7 +192,7 @@ class _AuthCodePageState extends State<AuthCodePage> {
             TextButton(
               onPressed: onResendCode,
               child: const Text(
-                '인증 코드 재전송',
+                'Resend Auth Code',
                 style: TextStyle(fontWeight: FontWeight.bold),
               ),
             ),

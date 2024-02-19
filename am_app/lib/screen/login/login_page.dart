@@ -47,7 +47,7 @@ class _LoginPageState extends State<LoginPage> {
                   horizontal: 30,
                 ),
                 child: const Text(
-                  'Mose\'s Miracle',
+                  'EPAS',
                   style: TextStyle(
                     color: Colors.black87,
                     fontSize: 28,

@@ -4,12 +4,9 @@ import 'package:am_app/model/api/dto/api_response.dart';
 import 'package:am_app/model/api/dto/auth_request_info.dart';
 import 'package:am_app/model/api/token_api_utils.dart';
 import 'package:am_app/model/provider/user_provider.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 
 class AuthRequestApi extends TokenApiUtils {
-  final serviceServerUrl = dotenv.env['SERVICE_SERVER_URL']!;
-
   Future<List<AuthRequestInfo>> getAuthRequestInfo(
       UserProvider userProvider) async {
     await checkLoginStatus(userProvider);

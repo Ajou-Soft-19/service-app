@@ -59,14 +59,14 @@ class _UserInfoPageState extends State<UserInfoPage> {
 
   void onAuthorizationRequest(UserProvider userProvider) async {
     if (userProvider.hasRequestedEmergencyRole()) {
-      Assets().showErrorSnackBar(context, '이미 권한 요청을 했습니다.');
+      Assets().showErrorSnackBar(context, 'Already requested Emergency Role');
       return;
     }
 
     try {
       int requestId = await LoginApi().requestEmergencyRole(userProvider);
       userProvider.setRequestedEmergencyRole(requestId);
-      Assets().showSnackBar(context, '권한 요청을 했습니다.');
+      Assets().showSnackBar(context, 'Requested Emergency Role');
     } catch (e) {
       Assets().showErrorSnackBar(context, e.toString());
     }
@@ -74,14 +74,14 @@ class _UserInfoPageState extends State<UserInfoPage> {
 
   void onAuthorizationRequestCheck(UserProvider userProvider) async {
     if (userProvider.hasRequestedEmergencyRole() == false) {
-      Assets().showErrorSnackBar(context, '권한 요청을 하지 않았습니다.');
+      Assets().showErrorSnackBar(context, 'No request for Emergency Role');
       return;
     }
 
     try {
       await LoginApi().checkRequestEmergencyRole(userProvider);
       userProvider.removeRequestedEmergencyRole();
-      Assets().showSnackBar(context, '권한 요청을 했습니다.');
+      Assets().showSnackBar(context, 'Requested Emergency Role');
     } catch (e) {
       Assets().showErrorSnackBar(context, e.toString());
     }
@@ -212,7 +212,7 @@ class _UserInfoPageState extends State<UserInfoPage> {
             ? _buildActionButton(
                 onPressed: () => onAuthRequestPressed(),
                 backgroundColor: Colors.indigo,
-                text: 'Adming Auth Request Page',
+                text: 'Admin Role Request Page',
               )
             : const SizedBox(height: 0),
         _buildActionButton(
