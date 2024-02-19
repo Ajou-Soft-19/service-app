@@ -147,7 +147,7 @@ class _MapPageState extends State<MapPage> {
         _location.onLocationChanged.listen((l.LocationData currentLocation) {
       setState(() {
         _gpsHeading = currentLocation.heading ?? 0;
-        if (currentLocation.speed! * 3.6 >= 3) {
+        if (currentLocation.speed! * 3.6 >= 4) {
           _currentHeading = _gpsHeading;
         }
         _locationData = currentLocation;
@@ -184,8 +184,6 @@ class _MapPageState extends State<MapPage> {
     await _location.changeSettings(
         accuracy: l.LocationAccuracy.high, interval: 1000, distanceFilter: 5);
     _locationData = await _location.getLocation();
-    _updateUserMarker();
-    _moveCameraToCurrentLocation();
   }
 
   void _updateUserMarker() async {

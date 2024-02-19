@@ -6,6 +6,7 @@ import 'package:am_app/model/api/dto/vehicle_status.dart';
 import 'package:am_app/model/api/dto/warn_record.dart';
 import 'package:am_app/model/provider/user_provider.dart';
 import 'package:am_app/model/api/monitor_api.dart';
+import 'package:am_app/model/provider/vehicle_provider.dart';
 import 'package:am_app/screen/asset/assets.dart';
 import 'package:am_app/screen/image_resize.dart';
 import 'package:am_app/screen/map/map_service.dart';
@@ -123,6 +124,10 @@ class _AdminPageState extends State<AdminPage> {
     List<VehicleStatus> vehicleStatuses = await monitorApi.getVehicleStatus(
         userProvider, center.latitude, center.longitude, radius * 1000);
 
+    var vehicleProvider = Provider.of<VehicleProvider>(context, listen: false);
+    vehicleStatuses.removeWhere((element) =>
+        element.vehicleInfo != null &&
+        element.vehicleInfo!.vehicleId.toString() == vehicleProvider.vehicleId);
     normalVehicles.clear();
     emergencyVehicles.clear();
     for (var vehicleStatus in vehicleStatuses) {
@@ -154,6 +159,11 @@ class _AdminPageState extends State<AdminPage> {
         Assets().showErrorSnackBar(context, e.toString());
       }
     }
+
+    var vehicleProvider = Provider.of<VehicleProvider>(context, listen: false);
+    newVehicleStatuses.removeWhere((element) =>
+        element.vehicleInfo != null &&
+        element.vehicleInfo!.vehicleId.toString() == vehicleProvider.vehicleId);
 
     newVehicleStatuses.sort((a, b) {
       if (a == selectedVehicleStatus) return -1;
