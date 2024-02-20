@@ -3,7 +3,7 @@
 ## Initial page
 | 위치권한 화면 | 초기 화면                         | 계정 생성 버튼 클릭   | 
 |-------------|---------------------------------|------------------------------------|
-| ![초기화면](/Users/gimmingyu/StudioProjects/service-app/img/initial1.jpeg) | img | img |
+| ![초기화면](/img/initial1.jpeg) | img | img |
 앱을 켜면 위치 정보 권한 수락 요청이 있습니다. 이를 요청하면 앱의 초기화면으로 들어갑니다.
 
 ## 1. Sign up
