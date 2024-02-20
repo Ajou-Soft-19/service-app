@@ -109,9 +109,17 @@ class SocketConnector extends TokenApiUtils {
 
     _channel.sink.add(jsonEncode(initMessage));
 
-    _channel.stream.listen((message) {
+    _channel.stream.listen((message) async {
       Map<String, dynamic> parsedJson = jsonDecode(message);
       String messageType = parsedJson['messageType'];
+      if (parsedJson['code'] == 420 &&
+          parsedJson['data']['errMsg'] == "Vehicle Status Not Found") {
+        debugPrint(
+            'Received Vehicle Status Not Found, attempting to reconnect...');
+        _isConnected = false;
+        await openSocketNoLogin();
+        return;
+      }
       debugPrint("Received message: $messageType");
       switch (messageType) {
         case 'RESPONSE':
@@ -157,9 +165,17 @@ class SocketConnector extends TokenApiUtils {
 
     _channel.sink.add(jsonEncode(initMessage));
 
-    _channel.stream.listen((message) {
+    _channel.stream.listen((message) async {
       Map<String, dynamic> parsedJson = jsonDecode(message);
       String messageType = parsedJson['messageType'];
+      if (parsedJson['code'] == 420 &&
+          parsedJson['data']['errMsg'] == "Vehicle Status Not Found") {
+        debugPrint(
+            'Received Vehicle Status Not Found, attempting to reconnect...');
+        _isConnected = false;
+        await openSocketWithLogin();
+        return;
+      }
       debugPrint("Received message: $messageType");
       switch (messageType) {
         case 'RESPONSE':
