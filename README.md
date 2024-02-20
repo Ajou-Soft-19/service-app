@@ -30,7 +30,7 @@
 
 | 차량 선택 | 차량 등록      | 
 |-------------|---------------------------------|
-| <img src="img/SelectVehicle1.jpeg" width = "200"> | <img src="img/SelectVehicle2.jpeg" width = "200"> | 
+| <img src="img/selectVehicle1.jpeg" width = "200"> | <img src="img/selectVehicle2.jpeg" width = "200"> | 
 
 ### 3.3 Admin
 
@@ -50,6 +50,12 @@
 | 초기화면 |  
 |-------------|
 | <img src="img/monitoringPage1.jpeg" width = "500"> |
+
+| Dots | Explanation |
+|------|-------------|
+|![redDots](./am_app/assets/circle_red.png)|Emergency Vehicles|
+|![blueDots](/am_app/assets/circle_black.png)|Not-Alerted Vehicles|
+|![BlackDots](/am_app/assets/circle_blue.png)|Alerted Vehicles|
 
 | 차량 정보 |  
 |-------------|
