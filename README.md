@@ -30,7 +30,7 @@
 
 | 차량 선택 | 차량 등록 | 차량 등록 성공 |
 |-------------|-----------------|---|
-| !(차량선택)[img/selectVehicle1.jpeg] | !(차량등록)[img/selectVehicle2.jpeg] | !(차량 등록 성공)[img/selectVehicle3.jpeg] | 
+| ![차량선택](img/selectVehicle1.jpeg) | ![차량등록](img/selectVehicle2.jpeg) | ![차량 등록 성공](img/selectVehicle3.jpeg) | 
 
 ### 3.3 Admin
 
@@ -87,9 +87,13 @@
 
 | 첫 알림 확인 | 응급 차량 위치 반영 | 여러 응급 상황 등록 |
 | --- | --- | --- |
-| !(첫 알림 확인)[/img/alerted1.jpeg] | !(응급 차량 위치 반영)[/img/alerted2.jpeg] | !(여러 응급 상황 등록)[/img/alerted3.jpeg] |
+| ![첫 알림 확인](/img/alerted1.jpeg) | ![응급 차량 위치 반영](/img/alerted2.jpeg) | ![여러 응급 상황 등록](/img/alerted3.jpeg) |
 
+> 응급 차량일 경우, 응급 상황의 알림을 발송할 수 있습니다.
 
+| 초기 화면 | 네비게이션 시작 후 |
+| --- | - |
+|<img src="img/alerting1.jpeg" width = "200">|<img src="img/alerting2.jpeg" width = "200">|
 
 
 
