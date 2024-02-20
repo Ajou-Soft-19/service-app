@@ -333,173 +333,177 @@ class _AuthManagePagStateState extends State<AuthManagePagState> {
     return SizedBox(
       width: screenWidth,
       child: SingleChildScrollView(
-        scrollDirection: Axis.vertical,
-        padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.02),
-        child: DataTable(
-          columns: [
-            DataColumn(
-              label: SizedBox(
-                width: screenWidth * 0.01,
-                child: Center(
-                  child: Text(
-                    'ID',
-                    style: TextStyle(color: themeData.colorScheme.primary),
+        scrollDirection: Axis.horizontal,
+        child: SingleChildScrollView(
+          scrollDirection: Axis.vertical,
+          padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.02),
+          child: DataTable(
+            columns: [
+              DataColumn(
+                label: SizedBox(
+                  width: 30,
+                  child: Center(
+                    child: Text(
+                      'ID',
+                      style: TextStyle(color: themeData.colorScheme.primary),
+                    ),
                   ),
                 ),
               ),
-            ),
-            DataColumn(
-              label: SizedBox(
-                width: screenWidth * 0.1,
-                child: Center(
-                  child: Text(
-                    'Email',
-                    style: TextStyle(color: themeData.colorScheme.primary),
+              DataColumn(
+                label: SizedBox(
+                  width: 150,
+                  child: Center(
+                    child: Text(
+                      'Email',
+                      style: TextStyle(color: themeData.colorScheme.primary),
+                    ),
                   ),
                 ),
               ),
-            ),
-            DataColumn(
-              label: SizedBox(
-                width: screenWidth * 0.1,
-                child: Center(
-                  child: Text(
-                    'Role',
-                    style: TextStyle(color: themeData.colorScheme.primary),
+              DataColumn(
+                label: SizedBox(
+                  width: 160,
+                  child: Center(
+                    child: Text(
+                      'Role',
+                      style: TextStyle(color: themeData.colorScheme.primary),
+                    ),
                   ),
                 ),
               ),
-            ),
-            DataColumn(
-              label: SizedBox(
-                width: screenWidth * 0.05,
-                child: Center(
-                  child: Text(
-                    'Approved',
-                    style: TextStyle(color: themeData.colorScheme.primary),
+              DataColumn(
+                label: SizedBox(
+                  width: 100,
+                  child: Center(
+                    child: Text(
+                      'Approved',
+                      style: TextStyle(color: themeData.colorScheme.primary),
+                    ),
                   ),
                 ),
               ),
-            ),
-            DataColumn(
-              label: SizedBox(
-                width: screenWidth * 0.1,
-                child: Center(
-                  child: Text(
-                    'Modified Date',
-                    style: TextStyle(color: themeData.colorScheme.primary),
+              DataColumn(
+                label: SizedBox(
+                  width: 180,
+                  child: Center(
+                    child: Text(
+                      'Modified Date',
+                      style: TextStyle(color: themeData.colorScheme.primary),
+                    ),
                   ),
                 ),
               ),
-            ),
-            DataColumn(
-              label: SizedBox(
-                width: screenWidth * 0.16,
-                child: Center(
-                  child: Text(
-                    'Action',
-                    style: TextStyle(color: themeData.colorScheme.primary),
+              DataColumn(
+                label: SizedBox(
+                  width: 250,
+                  child: Center(
+                    child: Text(
+                      'Action',
+                      style: TextStyle(color: themeData.colorScheme.primary),
+                    ),
                   ),
                 ),
               ),
-            ),
-          ],
-          rows: displayAuthRequests.map((authRequest) {
-            return DataRow(cells: [
-              DataCell(Text(
-                authRequest.authRequestId.toString(),
-                style: const TextStyle(fontSize: 18),
-              )),
-              DataCell(Text(
-                authRequest.email,
-                style: const TextStyle(fontSize: 18),
-              )),
-              DataCell(Text(
-                authRequest.role.replaceFirst('ROLE_', ''),
-                style: const TextStyle(fontSize: 18),
-              )),
-              DataCell(
-                Center(
-                  child: authRequest.isPending
-                      ? Container() // isPending이 true일 경우 아무것도 표시하지 않습니다.
-                      : Icon(
-                          authRequest.isApproved
-                              ? Icons.check_box
-                              : Icons.cancel,
-                          color:
-                              authRequest.isApproved ? Colors.blue : Colors.red,
-                        ),
+            ],
+            rows: displayAuthRequests.map((authRequest) {
+              return DataRow(cells: [
+                DataCell(Text(
+                  authRequest.authRequestId.toString(),
+                  style: const TextStyle(fontSize: 18),
+                )),
+                DataCell(Text(
+                  authRequest.email,
+                  style: const TextStyle(fontSize: 18),
+                )),
+                DataCell(Text(
+                  authRequest.role.replaceFirst('ROLE_', ''),
+                  style: const TextStyle(fontSize: 18),
+                )),
+                DataCell(
+                  Center(
+                    child: authRequest.isPending
+                        ? Container() // isPending이 true일 경우 아무것도 표시하지 않습니다.
+                        : Icon(
+                            authRequest.isApproved
+                                ? Icons.check_box
+                                : Icons.cancel,
+                            color: authRequest.isApproved
+                                ? Colors.blue
+                                : Colors.red,
+                          ),
+                  ),
                 ),
-              ),
-              DataCell(Text(
-                _formatDate(DateTime.parse(authRequest.modifiedDate)),
-                style: const TextStyle(fontSize: 18),
-              )),
-              DataCell(
-                authRequest.isPending
-                    ? Row(
-                        children: [
-                          SizedBox(
-                            width: MediaQuery.of(context).size.width * 0.08,
-                            child: ElevatedButton(
-                              onPressed: () => onApproveButtonPressed(
-                                  userProvider, authRequest.authRequestId),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.blue,
-                                shape: const RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.zero,
+                DataCell(Text(
+                  _formatDate(DateTime.parse(authRequest.modifiedDate)),
+                  style: const TextStyle(fontSize: 18),
+                )),
+                DataCell(
+                  authRequest.isPending
+                      ? Row(
+                          children: [
+                            SizedBox(
+                              width: 120,
+                              child: ElevatedButton(
+                                onPressed: () => onApproveButtonPressed(
+                                    userProvider, authRequest.authRequestId),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.blue,
+                                  shape: const RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.zero,
+                                  ),
+                                ), // 아직 정의되지 않은 함수
+                                child: const Text(
+                                  'Approve',
+                                  style: TextStyle(color: Colors.white),
                                 ),
-                              ), // 아직 정의되지 않은 함수
-                              child: const Text(
-                                'Approve',
-                                style: TextStyle(color: Colors.white),
                               ),
                             ),
-                          ),
-                          const SizedBox(
-                            width: 10,
-                          ),
-                          SizedBox(
-                            width: MediaQuery.of(context).size.width * 0.08,
-                            child: ElevatedButton(
-                              onPressed: () => onRejectButtonPressed(
-                                  userProvider, authRequest.authRequestId),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.red,
-                                shape: const RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.zero,
+                            const SizedBox(
+                              width: 10,
+                            ),
+                            SizedBox(
+                              width: 120,
+                              child: ElevatedButton(
+                                onPressed: () => onRejectButtonPressed(
+                                    userProvider, authRequest.authRequestId),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.red,
+                                  shape: const RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.zero,
+                                  ),
+                                ), // 아직 정의되지 않은 함수
+                                child: const Text(
+                                  'Reject',
+                                  style: TextStyle(color: Colors.white),
                                 ),
-                              ), // 아직 정의되지 않은 함수
-                              child: const Text(
-                                'Reject',
-                                style: TextStyle(color: Colors.white),
                               ),
                             ),
-                          ),
-                        ],
-                      )
-                    : Center(
-                        child: SizedBox(
-                          width: MediaQuery.of(context).size.width * 0.1,
-                          child: OutlinedButton(
-                            onPressed: () {},
+                          ],
+                        )
+                      : Center(
+                          child: SizedBox(
+                            width: 120,
+                            child: OutlinedButton(
+                              onPressed: () {},
 
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: Colors.white,
-                              shape: const RoundedRectangleBorder(
-                                borderRadius: BorderRadius.zero,
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: Colors.white,
+                                shape: const RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.zero,
+                                ),
+                              ), // 아직 정의되지 않은 함수
+                              child: Text(
+                                'Processed',
+                                style: TextStyle(color: Colors.blue[700]),
                               ),
-                            ), // 아직 정의되지 않은 함수
-                            child: Text(
-                              'Processed',
-                              style: TextStyle(color: Colors.blue[700]),
                             ),
                           ),
                         ),
-                      ),
-              ),
-            ]);
-          }).toList(),
+                ),
+              ]);
+            }).toList(),
+          ),
         ),
       ),
     );

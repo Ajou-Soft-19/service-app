@@ -171,7 +171,7 @@ class _SignUpPageState extends State<SignUpPage> {
                           if (value.length < 8) {
                             return 'Enter password more than 8 characters';
                           } else if (!_passwordRegex.hasMatch(value)) {
-                            return "Enter password with at least 1 letter, 1 number, and 1 special character";
+                            return "Need one letter, number, and special character each";
                           }
                           return null;
                         },
