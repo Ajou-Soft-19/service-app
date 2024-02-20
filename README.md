@@ -28,9 +28,9 @@
 | <img src="img/emergencyUser1.jpeg" width = "200"> | 
 > 차량 선택 버튼을 통해 응급 상황으로 등록할 차량을 선택할 수 있다.
 
-| 차량 선택 | 차량 등록      | 
-|-------------|---------------------------------|
-| <img src="img/selectVehicle1.jpeg" width = "200"> | <img src="img/selectVehicle2.jpeg" width = "200"> | 
+| 차량 선택 | 차량 등록 | 차량 등록 성공 |
+|-------------|-----------------|---|
+| !(차량선택)[img/selectVehicle1.jpeg] | !(차량등록)[img/selectVehicle2.jpeg] | !(차량 등록 성공)[img/selectVehicle3.jpeg] | 
 
 ### 3.3 Admin
 
@@ -51,34 +51,51 @@
 |-------------|
 | <img src="img/monitoringPage1.jpeg" width = "500"> |
 
-| Dots | Explanation |
-|------|-------------|
-|![redDots](./am_app/assets/circle_red.png)|Emergency Vehicles|
-|![blueDots](/am_app/assets/circle_black.png)|Not-Alerted Vehicles|
-|![BlackDots](/am_app/assets/circle_blue.png)|Alerted Vehicles|
-
 | 차량 정보 |  
 |-------------|
 | <img src="img/monitoringPage2.jpeg" width = "500"> |
-| 화면 위에 작은 점들은 차량으로, 점을 누르면 차량 정보가 모달 창이 뜹니다. |
+> 화면 위에 작은 점들은 차량으로, 점을 누르면 차량 정보가 모달 창이 뜹니다.
+
+| Dots | Explanation |
+|------|-------------|
+|<img src = "./am_app/assets/circle_red.png" width = "20">|Emergency Vehicles|
+|<img src = "./am_app/assets/circle_blue.png" width = "20">|Not-Alerted Vehicles|
+|<img src = "./am_app/assets/circle_black.png" width = "20">|Alerted Vehicles|
+
 
 | 긴급차량 별 확인 |  
 |-------------|
 | <img src="img/monitoringPage3.jpeg" width = "500"> |
-| 응급차 별로 경로와 알림 경계를 볼 수 있습니다. |
+> 응급차 별로 경로와 알림 경계를 볼 수 있습니다.  
+
+- `Unselect` 버튼으로 차량 선택 버튼을 취소할 수 있습니다.  
+- `Filter` 버튼으로 화면에 표시되는 영역의 범위를 정합니다.  
+- `Pin` 버튼으로 선택한 차량을 중심으로 화면을 고정합니다.
 
 ## Mappage
 
-공통적인 부분 설명
-> 정적인화면
-  - 설정버튼, 검색, 내위치이동버튼
-> 검색하고 경로찾기
+> 일반적인 네비게이션 사용법과 동일합니다.
 
-  - 일반적인 네비게이션 사용법과 동일
-  - 목적지 설정
-  - startnavigation 하면 네비가이드 시작
-  - 뒤로가기나 목적지도착30m 부근 가이드 종료
+| 초기화면 | 위치 검색 리스트 | 경로 탐색 | 가이드 시작 |네비게이션 종료|
+|---|---|---|---|---|
+|![초기화면](/img/mapPage1.jpeg)|![위치 검색 리스트](/img/mapPage2.jpeg)|![경로 탐색](/img/mapPage3.jpeg)|![가이드 시작](/img/mapPage4.jpeg)|![네비게이션 종료](/img/mapPage5.jpeg)|
+||원하는 목적지를 선택할 수 있습니다.|||뒤로가기 버튼이나 목적지 30m 부근에 도착하면 가이드를 종료합니다.|
 
-### Emergency User
+## EPAS
 
-응급권한이 있는 경우, 차량을 선택한뒤 알림발송서비스를 이용할 수 있다.
+> 일반 차량일 경우, 응급 상황의 알림을 받습니다.
+
+| 첫 알림 확인 | 응급 차량 위치 반영 | 여러 응급 상황 등록 |
+| --- | --- | --- |
+| !(첫 알림 확인)[/img/alerted1.jpeg] | !(응급 차량 위치 반영)[/img/alerted2.jpeg] | !(여러 응급 상황 등록)[/img/alerted3.jpeg] |
+
+
+
+
+
+
+
+
+
+
+
