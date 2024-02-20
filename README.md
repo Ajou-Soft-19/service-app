@@ -36,7 +36,7 @@
 
 ### 3.1 General User
 
-| General User Account | After Requesting Emergency Vehicle Authorization      |
+| General User Account | After Requesting<br> Emergency Vehicle<br> Authorization      |
 |-------------|---------------------------------|
 | <img src="img/generalUser1.jpeg" width = "200"> | <img src="img/generalUser2.jpeg" width = "200"> |
 
