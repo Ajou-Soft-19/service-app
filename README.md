@@ -1,31 +1,36 @@
 # service-app
 
 ## Initial page
-| 위치권한 화면 | 초기 화면                         | 계정 생성 버튼 클릭   | 
+
+| 위치권한 화면 | 초기 화면                         | 유저 인포 화면 |
 |-------------|---------------------------------|------------------------------------|
-| ![위치권한 화면](/img/initial1.jpeg) | ![초기화면](/img/initial2.jpeg) | ![계정 생성 버튼 클릭](/img/initial3.jpeg) |
+| ![위치권한 화면](/img/initial1.jpeg) | ![초기화면](/img/initial2.jpeg) | ![유저 인포 화면](/img/initial3.jpeg) |
 |위치 권한 설정을 해야 앱을 실행할 수 있습니다.|일반 사용자의 맵 페이지로, 설정버튼을 누르면 계정 정보 페이지로 넘어갑니다. |로그인하거나 회원가입할 수 있습니다.|
 
 ## 1. Sign up
-| 계정 생성 초기 화면 | 계정 생성 폼                         | 계정 생성 버튼 클릭   | 
+| 계정 생성 초기 화면 | 계정 생성 폼                         | 계정 생성 성공   |
 |-------------|---------------------------------|------------------------------------|
 | ![계정 생성 초기화면](/img/signup1.jpeg) | ![계정 생성 폼](/img/signup2.jpeg) | ![계정 생성 성공](/img/signup3.jpeg) |
 
 ## 2. Sign in
-| 로그인 초기 화면 | 로그인 폼                         | 
+| 로그인 초기 화면 | 로그인 폼                         |
 |-------------|---------------------------------|
-| <img src="img/signin1.jpeg" width = "200"> | <img src="img/signin2.jpeg" width = "200"> | 
+| <img src="img/signin1.jpeg" width = "200"> | <img src="img/signin2.jpeg" width = "200"> |
+
 ## 3. User Info
 
 ### 3.1 General User
-| 일반사용자 계정 | 응급차량 권한 등록 권한 요청 후      | 
+| 일반사용자 계정 | 응급차량 권한 등록 권한 요청 후      |
 |-------------|---------------------------------|
-| <img src="img/generalUser1.jpeg" width = "200"> | <img src="img/generalUser2.jpeg" width = "200"> | 
+| <img src="img/generalUser1.jpeg" width = "200"> | <img src="img/generalUser2.jpeg" width = "200"> |
+
 > 관리자가 권한을 수락하면, Check Auth Request로 권한이 수정된 것을 확인할 수 있습니다.
+
 ### 3.2 Emergency Auth User
+
 | 응급차량 계정 |  
 |-------------|
-| <img src="img/emergencyUser1.jpeg" width = "200"> | 
+| <img src="img/emergencyUser1.jpeg" width = "200"> |
 > 차량 선택 버튼을 통해 응급 상황으로 등록할 차량을 선택할 수 있다.
 
 | 차량 선택 | 차량 등록 | 차량 등록 성공 |
@@ -44,7 +49,6 @@
 |-------------|
 | <img src="img/adminRoleRequestListPage.jpeg" width = "500"> |
 
-
 #### 3.3.2 Monitoring Page
 
 | 초기화면 |  
@@ -62,7 +66,6 @@
 |<img src = "./am_app/assets/circle_blue.png" width = "20">|Not-Alerted Vehicles|
 |<img src = "./am_app/assets/circle_black.png" width = "20">|Alerted Vehicles|
 
-
 | 긴급차량 별 확인 |  
 |-------------|
 | <img src="img/monitoringPage3.jpeg" width = "500"> |
@@ -72,7 +75,7 @@
 - `Filter` 버튼으로 화면에 표시되는 영역의 범위를 정합니다.  
 - `Pin` 버튼으로 선택한 차량을 중심으로 화면을 고정합니다.
 
-## Mappage
+## Map Page
 
 > 일반적인 네비게이션 사용법과 동일합니다.
 
@@ -94,12 +97,3 @@
 | 초기 화면 | 네비게이션 시작 후 |
 | --- | - |
 |<img src="img/alerting1.jpeg" width = "200">|<img src="img/alerting2.jpeg" width = "200">|
-
-
-
-
-
-
-
-
-
