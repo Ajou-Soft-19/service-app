@@ -489,7 +489,7 @@ class _AdminPageState extends State<AdminPage> {
               _controller = controller;
             },
             initialCameraPosition: const CameraPosition(
-              target: LatLng(37.34998, 126.108605),
+              target: LatLng(37.350006, 127.108596),
               zoom: 11.0,
             ),
             markers: _markers,

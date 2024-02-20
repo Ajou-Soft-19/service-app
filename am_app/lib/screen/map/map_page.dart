@@ -191,7 +191,7 @@ class _MapPageState extends State<MapPage> with WidgetsBindingObserver {
 
   Future<void> _getLocation() async {
     await _location.changeSettings(
-        accuracy: l.LocationAccuracy.high, interval: 1000, distanceFilter: 2);
+        accuracy: l.LocationAccuracy.high, interval: 1000);
     _locationData = await _location.getLocation();
   }
 
