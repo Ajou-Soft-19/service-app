@@ -36,21 +36,21 @@
 
 | 어드민 페이지 |  
 |-------------|
-| <img src="img/emergencyUser1.jpeg" width = "200"> |
+| <img src="img/adminUser.jpeg" width = "200"> |
 
 #### 3.3.1 Admin Role Request Page
 
-| 어드민 페이지 |  
+| 권한 관리 페이지 |  
 |-------------|
-| <img src="img/adminRoleRequestListPage.jpeg" width = "200"> |
+| <img src="img/adminRoleRequestListPage.jpeg" width = "500"> |
 
 
 #### 3.3.2 Monitoring Page
 
-| 어드민 계정 | 권한 관리 페이지   | 계정 생성 버튼 클릭 | 
+| 초기화면 | 차량 정보 | 응급차 별 확인 | 
 |-------------|---------------------------------|------------------------------------|
-| ![위치권한 화면](/img/initial1.jpeg) | ![초기화면](/img/initial2.jpeg) | ![계정 생성 버튼 클릭](/img/initial3.jpeg) |
-| 위치 권한 설정을 해야 앱을 실행할 수 있습니다. | 일반 사용자의 맵 페이지로, 설정버튼을 누르면 계정 정보 페이지로 넘어갑니다. | 로그인하거나 회원가입할 수 있습니다. |
+| ![초기화면](/img/monitoringPage1.jpeg) | ![차량 정보](/img/monitoringPage2.jpeg) | ![응급차 별 경로 및 알림 확인](/img/monitoringPage3.jpeg) |
+|  | 화면 위에 작은 점들은 차량으로, 점을 누르면 차량 정보가 모달 창이 뜹니다. | 응급차 별로 경로와 알림 경계를 볼 수 있습니다. |
 
 ## Mappage
 
