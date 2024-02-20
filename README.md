@@ -1,24 +1,71 @@
 # service-app
 
+## Initial page
+| 위치권한 화면 | 초기 화면                         | 계정 생성 버튼 클릭   | 
+|-------------|---------------------------------|------------------------------------|
+| ![위치권한 화면](/img/initial1.jpeg) | ![초기화면](/img/initial2.jpeg) | ![계정 생성 버튼 클릭](/img/initial3.jpeg) |
+|위치 권한 설정을 해야 앱을 실행할 수 있습니다.|일반 사용자의 맵 페이지로, 설정버튼을 누르면 계정 정보 페이지로 넘어갑니다. |로그인하거나 회원가입할 수 있습니다.|
+
 ## 1. Sign up
 | 계정 생성 초기 화면 | 계정 생성 폼                         | 계정 생성 버튼 클릭   | 
 |-------------|---------------------------------|------------------------------------|
-| img | img | img |
+| ![계정 생성 초기화면](/img/signup1.jpeg) | ![계정 생성 폼](/img/signup2.jpeg) | ![계정 생성 성공](/img/signup3.jpeg) |
 
 ## 2. Sign in
-| 로그인 초기 화면 | 로그인 폼                         | 로그인 성공   | 
-|-------------|---------------------------------|------------------------------------|
-| img | img | img |
-## User Info
+| 로그인 초기 화면 | 로그인 폼                         | 
+|-------------|---------------------------------|
+| <img src="img/signin1.jpeg" width = "200"> | <img src="img/signin2.jpeg" width = "200"> | 
+## 3. User Info
 
-### General User
-일반계정 + 권한요청 , 정보수집용이다~
-### Emergency User
-응급차계정
-- 차량선택-> 네비게이션 사용시 맵페이지에서 긴급상황을 등록할 수 있음
+### 3.1 General User
+| 일반사용자 계정 | 응급차량 권한 등록 권한 요청 후      | 
+|-------------|---------------------------------|
+| <img src="img/generalUser1.jpeg" width = "200"> | <img src="img/generalUser2.jpeg" width = "200"> | 
+> 관리자가 권한을 수락하면, Check Auth Request로 권한이 수정된 것을 확인할 수 있습니다.
+### 3.2 Emergency Auth User
+| 응급차량 계정 |  
+|-------------|
+| <img src="img/emergencyUser1.jpeg" width = "200"> | 
+> 차량 선택 버튼을 통해 응급 상황으로 등록할 차량을 선택할 수 있다.
 
-### Admin
-권한수락, 모니터링페이지
+| 차량 선택 | 차량 등록      | 
+|-------------|---------------------------------|
+| <img src="img/selectVehicle1.jpeg" width = "200"> | <img src="img/selectVehicle2.jpeg" width = "200"> | 
+
+### 3.3 Admin
+
+| 어드민 페이지 |  
+|-------------|
+| <img src="img/adminUser.jpeg" width = "200"> |
+
+#### 3.3.1 Admin Role Request Page
+
+| 권한 관리 페이지 |  
+|-------------|
+| <img src="img/adminRoleRequestListPage.jpeg" width = "500"> |
+
+
+#### 3.3.2 Monitoring Page
+
+| 초기화면 |  
+|-------------|
+| <img src="img/monitoringPage1.jpeg" width = "500"> |
+
+| Dots | Explanation |
+|------|-------------|
+|![redDots](./am_app/assets/circle_red.png)|Emergency Vehicles|
+|![blueDots](/am_app/assets/circle_black.png)|Not-Alerted Vehicles|
+|![BlackDots](/am_app/assets/circle_blue.png)|Alerted Vehicles|
+
+| 차량 정보 |  
+|-------------|
+| <img src="img/monitoringPage2.jpeg" width = "500"> |
+| 화면 위에 작은 점들은 차량으로, 점을 누르면 차량 정보가 모달 창이 뜹니다. |
+
+| 긴급차량 별 확인 |  
+|-------------|
+| <img src="img/monitoringPage3.jpeg" width = "500"> |
+| 응급차 별로 경로와 알림 경계를 볼 수 있습니다. |
 
 ## Mappage
 
