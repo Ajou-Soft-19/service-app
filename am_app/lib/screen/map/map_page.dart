@@ -34,7 +34,7 @@ class MapPage extends StatefulWidget {
   _MapPageState createState() => _MapPageState();
 }
 
-class _MapPageState extends State<MapPage> {
+class _MapPageState extends State<MapPage> with WidgetsBindingObserver {
   GoogleMapController? _controller;
 
   final l.Location _location = l.Location();
@@ -86,6 +86,7 @@ class _MapPageState extends State<MapPage> {
     tts.setVolume(0.8);
     tts.getDefaultEngine;
     tts.getDefaultVoice;
+    WidgetsBinding.instance.addObserver(this);
   }
 
   @override
@@ -94,7 +95,15 @@ class _MapPageState extends State<MapPage> {
     _locationSubscription?.cancel();
     _locationSingletonSubscription?.cancel();
     _endNavigation();
+    WidgetsBinding.instance.removeObserver(this);
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.detached) {
+      socketService.close();
+    }
   }
 
   void initListeners() async {
