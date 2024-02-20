@@ -1,5 +1,6 @@
 import 'package:am_app/model/api/user_info_api.dart';
 import 'package:am_app/model/provider/user_provider.dart';
+import 'package:am_app/screen/asset/app_bar.dart';
 import 'package:am_app/screen/asset/assets.dart';
 import 'package:flutter/material.dart';
 
@@ -26,11 +27,12 @@ class _EditUserInfoPageState extends State<EditUserInfoPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Edit User Info'),
+      appBar: const CustomAppBar(
+        title: 'Edit User Info',
+        backButton: true,
       ),
       body: Padding(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(30),
         child: Form(
           key: formKey,
           child: Column(

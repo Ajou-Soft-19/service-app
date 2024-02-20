@@ -536,10 +536,12 @@ class _AdminPageState extends State<AdminPage> {
   }
 
   Align _buildEmergencyVehicleList(UserProvider userProvider) {
+    double width = MediaQuery.of(context).size.width * 0.2;
+    if (width < 250) width = 250;
     return Align(
       alignment: Alignment.centerRight,
       child: Container(
-        width: MediaQuery.of(context).size.width * 0.2,
+        width: width,
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
