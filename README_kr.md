@@ -1,17 +1,27 @@
-# service-app
+# EPAS APP
 
-- [service-app](#service-app)
-  * [Initial page](#initial-page)
-  * [1. Sign up](#1-sign-up)
-  * [2. Sign in](#2-sign-in)
-  * [3. User Info](#3-user-info)
-    + [3.1 General User](#31-general-user)
-    + [3.2 Emergency Auth User](#32-emergency-auth-user)
-    + [3.3 Admin](#33-admin)
+- [EPAS APP](#epas-app)
+  - [테스트 계정](#테스트-계정)
+  - [Initial Page](#initial-page)
+  - [1. Sign Up](#1-sign-up)
+  - [2. Sign In](#2-sign-in)
+  - [3. User Info](#3-user-info)
+    - [3.1 General User](#31-general-user)
+    - [3.2 Emergency Auth User](#32-emergency-auth-user)
+    - [3.3 Admin](#33-admin)
       - [3.3.1 Admin Role Request Page](#331-admin-role-request-page)
       - [3.3.2 Monitoring Page](#332-monitoring-page)
-  * [4. Map Page](#4-map-page)
-  * [5. EPAS](#5-epas)
+  - [4. Map Page](#4-map-page)
+  - [5. EPAS](#5-epas)
+
+## 테스트 계정
+
+| 권한 | 이메일 | 비밀번호 |
+|------|-------|----------|
+| `Emergency, Admin` | `adminepas@ajou.ac.kr` | `adminepas1234!?` |
+| `Emergency` | `epas@ajou.ac.kr` | `1q2w3e4r!` |
+
+이 계정을 통해 응급 차량 등록과 어드민 페이지를 테스트할 수 있습니다. 자세한 내용은 아래를 참고해주세요.
 
 ## Initial page
 
@@ -51,7 +61,7 @@
 
 | 차량 선택 | 차량 등록 | 차량 등록 성공 |
 |-------------|-----------------|---|
-| ![차량선택](img/selectVehicle1.jpeg) | ![차량등록](img/selectVehicle2.jpeg) | ![차량 등록 성공](img/selectVehicle3.jpeg) | 
+| ![차량선택](img/selectVehicle1.jpeg) | ![차량등록](img/selectVehicle2.jpeg) | ![차량 등록 성공](img/selectVehicle3.jpeg) |
 
 ### 3.3 Admin
 
@@ -113,4 +123,4 @@
 
 | 초기 화면 | 네비게이션 시작 후 |
 | --- | - |
-|<img src="img/alerting1.jpeg" width = "200">|<img src="img/alerting2.jpeg" width = "200">|
+| <img src="img/alerting1.jpeg" width = "200">|<img src="img/alerting2.jpeg" width = "200">|
