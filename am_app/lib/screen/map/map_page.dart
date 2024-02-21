@@ -23,6 +23,7 @@ import 'package:location/location.dart' as l;
 import 'package:google_maps_webservice/places.dart' as p;
 import 'package:provider/provider.dart';
 import 'package:smooth_compass/utils/src/compass_ui.dart';
+import 'package:synchronized/synchronized.dart';
 import 'custom_google_map.dart';
 import 'search_service.dart';
 import 'map_service.dart';
@@ -69,6 +70,7 @@ class _MapPageState extends State<MapPage> with WidgetsBindingObserver {
 
   final FlutterTts tts = FlutterTts();
   AudioPlayer audioPlayer = AudioPlayer();
+  final _tts_lock = Lock();
 
   Queue<String> messageQueue = Queue<String>();
 
@@ -229,9 +231,14 @@ class _MapPageState extends State<MapPage> with WidgetsBindingObserver {
     );
   }
 
-  Future<void> _speak(String text) async {
-    await tts.awaitSpeakCompletion(true);
-    await tts.speak(text);
+  Future<void> _speak(String text, {bool isAlert = false}) async {
+    await _tts_lock.synchronized(() async {
+      if (isAlert) {
+        audioPlayer.play(AssetSource('beep.mp3'));
+      }
+      await tts.awaitSpeakCompletion(true);
+      await tts.speak(text);
+    });
   }
 
   Future<void> _speakAlert() async {
@@ -253,43 +260,49 @@ class _MapPageState extends State<MapPage> with WidgetsBindingObserver {
         drawAlertRoute(licenseNumber);
         return;
       }
-      if (_isUsingNavi == false ||
-          (await _mapService.doPathsIntersect(
-              navigationData!.pathPoint,
-              latLngToPathPoints(AlertSingleton()
-                  .pathPoints[licenseNumber]!
-                  .values
-                  .toList())))) {
-        LatLng? currentPathPointLatLng =
-            AlertSingleton().markers[licenseNumber]?.position;
-        if (currentPathPointLatLng == null) return;
-        LatLng myLatLng = LocationSingleton().getCurrentLocLatLng() ??
-            LatLng(_locationData.latitude!, _locationData.longitude!);
-        String? direction = AlertSingleton().determineDirection(AlertSingleton()
-                .calculateBearing(myLatLng, currentPathPointLatLng) -
-            _currentHeading);
-        Alignment alignment = _getAlignmentFromDirection(direction);
 
-        Assets().showWhereEmergency(context, alignment, direction);
-        if (AlertSingleton().isAlerted[licenseNumber] == false) {
-          messageQueue.add(
-              "Emergency Car from ${direction.replaceAll('_', ' ')} Slow Down");
-          // await _speak(
-          //     "Emergency Car from ${direction.replaceAll('_', ' ')} Slow Down");
-          if (direction == 'south') {
-            messageQueue.add("It's behind you, move aside");
-            // await _speak("It's behind you, move aside");
-          }
-          AlertSingleton().isAlerted[licenseNumber] = true;
-          _speakAlert();
-
-          audioPlayer.play(AssetSource('beep.mp3'));
-
-          debugPrint("Speaking");
-        }
+      if (_isUsingNavi == false) {
+        alertUser(licenseNumber);
+        return;
       }
-      drawAlertRoute(licenseNumber);
+
+      bool doesPathIntersect = await _mapService.doPathsIntersect(
+          navigationData!.pathPoint,
+          latLngToPathPoints(
+              AlertSingleton().pathPoints[licenseNumber]!.values.toList()));
+
+      if (_isUsingNavi && doesPathIntersect) {
+        alertUser(licenseNumber);
+      }
+
+      if (_isUsingNavi && doesPathIntersect == false) {
+        // remove path and car
+      }
     });
+  }
+
+  void alertUser(String licenseNumber) async {
+    LatLng? currentPathPointLatLng =
+        AlertSingleton().markers[licenseNumber]?.position;
+    if (currentPathPointLatLng == null) return;
+    LatLng myLatLng = LocationSingleton().getCurrentLocLatLng() ??
+        LatLng(_locationData.latitude!, _locationData.longitude!);
+    String? direction = AlertSingleton().determineDirection(AlertSingleton()
+        .calculateBearing(myLatLng, currentPathPointLatLng, _currentHeading));
+
+    Alignment alignment = _getAlignmentFromDirection(direction);
+    Assets().showWhereEmergency(context, alignment, direction);
+    drawAlertRoute(licenseNumber);
+
+    if (AlertSingleton().isAlerted[licenseNumber] == false) {
+      AlertSingleton().isAlerted[licenseNumber] = true;
+      await _speak(
+          "Emergency Car from ${direction.replaceAll('_', ' ')} Slow Down",
+          isAlert: true);
+      if (direction == 'south') {
+        await _speak("It's behind you, move aside", isAlert: true);
+      }
+    }
   }
 
   void drawAlertRoute(String licenseNumber) {

@@ -42,7 +42,8 @@ class AlertSingleton {
     pathPoints[licenseNumber] = pathPointsData;
     debugPrint(data.toString());
     vehicleType[licenseNumber] = emergencyPathData.vehicleType;
-    BitmapDescriptor descriptor = await getBitmapBasedOnVehicleType(vehicleType[licenseNumber]!); // 비동기 작업의 완료를 기다려 BitmapDescriptor 값을 얻어옴
+    BitmapDescriptor descriptor = await getBitmapBasedOnVehicleType(
+        vehicleType[licenseNumber]!); // 비동기 작업의 완료를 기다려 BitmapDescriptor 값을 얻어옴
     markers[licenseNumber] = Marker(
       markerId: MarkerId(licenseNumber),
       position: pathPoints[licenseNumber]![currentPathPointData]!,
@@ -56,12 +57,14 @@ class AlertSingleton {
     _controller.sink.add(licenseNumber);
   }
 
-  Future<void> updateVehicleDataByUpdateAlert(Map<String, dynamic> parsedJson) async {
+  Future<void> updateVehicleDataByUpdateAlert(
+      Map<String, dynamic> parsedJson) async {
     Map<String, dynamic> data = parsedJson['data'];
     String licenseNumber = data['licenseNumber'];
     double lat = data['latitude'];
     double lng = data['longitude'];
-    BitmapDescriptor descriptor = await getBitmapBasedOnVehicleType(vehicleType[licenseNumber]!);
+    BitmapDescriptor descriptor =
+        await getBitmapBasedOnVehicleType(vehicleType[licenseNumber]!);
     markers[licenseNumber] = Marker(
       markerId: MarkerId(licenseNumber),
       position: LatLng(lat, lng),
@@ -97,7 +100,7 @@ class AlertSingleton {
     return R * c; // in metres
   }
 
-  double calculateBearing(LatLng point1, LatLng point2) {
+  double calculateBearing(LatLng point1, LatLng point2, double currentBearing) {
     final double lat1 = point1.latitude * pi / 180;
     final double lat2 = point2.latitude * pi / 180;
     final double lng1 = point1.longitude * pi / 180;
@@ -106,7 +109,7 @@ class AlertSingleton {
     final double y = sin(lng2 - lng1) * cos(lat2);
     final double x =
         cos(lat1) * sin(lat2) - sin(lat1) * cos(lat2) * cos(lng2 - lng1);
-    double bearing = atan2(y, x) * 180 / pi;
+    double bearing = atan2(y, x) * 180 / pi - currentBearing;
 
     bearing = (bearing + 360) % 360;
 
