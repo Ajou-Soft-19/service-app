@@ -1,17 +1,27 @@
-# Service-App
+# EPAS APP
 
-- [Service-App](#service-app)
-  * [Initial Page](#initial-page)
-  * [1. Sign Up](#1-sign-up)
-  * [2. Sign In](#2-sign-in)
-  * [3. User Info](#3-user-info)
-    + [3.1 General User](#31-general-user)
-    + [3.2 Emergency Auth User](#32-emergency-auth-user)
-    + [3.3 Admin](#33-admin)
+- [EPAS APP](#epas-app)
+  - [Test Account](#test-account)
+  - [Initial Page](#initial-page)
+  - [1. Sign Up](#1-sign-up)
+  - [2. Sign In](#2-sign-in)
+  - [3. User Info](#3-user-info)
+    - [3.1 General User](#31-general-user)
+    - [3.2 Emergency Auth User](#32-emergency-auth-user)
+    - [3.3 Admin](#33-admin)
       - [3.3.1 Admin Role Request Page](#331-admin-role-request-page)
       - [3.3.2 Monitoring Page](#332-monitoring-page)
-  * [4. Map Page](#4-map-page)
-  * [5. EPAS](#5-epas)
+  - [4. Map Page](#4-map-page)
+  - [5. EPAS](#5-epas)
+
+## Test Account
+
+| Role | Email | Password |
+|------|-------|----------|
+| `Emergency, Admin` | `adminepas@ajou.ac.kr` | `adminepas1234!?` |
+| `Emergency` | `epas@ajou.ac.kr` | `1q2w3e4r!` |
+
+By this account, you can test the emergency vehicle registration and the admin page. For more information, please refer to the following.
 
 ## Initial Page
 
@@ -51,7 +61,7 @@
 
 | Vehicle Selection | Vehicle Registration | Vehicle Registration Success |
 |-------------|-----------------|---|
-| ![Vehicle Selection](img/selectVehicle1.jpeg) | ![Vehicle Registration](img/selectVehicle2.jpeg) | ![Vehicle Registration Success](img/selectVehicle3.jpeg) | 
+| ![Vehicle Selection](img/selectVehicle1.jpeg) | ![Vehicle Registration](img/selectVehicle2.jpeg) | ![Vehicle Registration Success](img/selectVehicle3.jpeg) |
 
 ### 3.3 Admin
 
@@ -85,7 +95,7 @@
 | Emergency Vehicle Confirmation |  
 |-------------|
 | <img src="img/monitoringPage3.jpeg" width = "500"> |
-> You can see the path and alert boundary for each emergency vehicle. 
+> You can see the path and alert boundary for each emergency vehicle.
 
 - You can cancel the vehicle selection with the `Unselect` button.
 - You can define the range of the area displayed on the screen with the `Filter` button.
