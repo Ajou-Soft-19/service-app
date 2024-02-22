@@ -23,6 +23,14 @@
 
 By this account, you can test the emergency vehicle registration and the admin page. For more information, please refer to the following.
 
+## Install
+
+[Download apk file](https://github.com/Ajou-Soft-19/service-app/releases/tag/v1.0.1) on your based on Android
+
+|Download from Assets|Install Anyway|Install Success|
+|---|---|---|
+|![Download from Assets](./img/install1.jpeg)|![Install Anyway](./img/install2.jpeg)|![Install Success](./img/install3.jpeg)
+
 ## Initial Page
 
 | Location Permission Screen | Initial Screen                         | User Info Screen |
