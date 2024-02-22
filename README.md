@@ -2,6 +2,7 @@
 
 - [EPAS APP](#epas-app)
   - [Test Account](#test-account)
+  - [Install](#install)
   - [Initial Page](#initial-page)
   - [1. Sign Up](#1-sign-up)
   - [2. Sign In](#2-sign-in)
@@ -25,7 +26,7 @@ By this account, you can test the emergency vehicle registration and the admin p
 
 ## Install
 
-[Download apk file](https://github.com/Ajou-Soft-19/service-app/releases/tag/v1.0.1) on your based on Android
+[Download apk file](https://github.com/Ajou-Soft-19/service-app/releases/tag/v1.0.1) on your Android device
 
 |Download from Assets|Install Anyway|Install Success|
 |---|---|---|
