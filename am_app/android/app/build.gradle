@@ -51,6 +51,8 @@ android {
         targetSdkVersion flutter.targetSdkVersion
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName
+        buildConfigField("String", "GMP_KEY", localProperties['GMP_KEY'])
+
     }
 
     buildTypes {
