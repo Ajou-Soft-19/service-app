@@ -7,6 +7,7 @@ import 'package:am_app/screen/asset/app_bar.dart';
 import 'package:am_app/screen/asset/assets.dart';
 import 'package:am_app/screen/login/edit_user_info_page.dart';
 import 'package:am_app/screen/vehicle/vehicle_list_page.dart';
+import 'package:am_app/screen/webview/webview.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -184,6 +185,12 @@ class _UserInfoPageState extends State<UserInfoPage> {
     return Column(
       children: [
         const SizedBox(height: 20),
+        _buildActionButton(
+          onPressed: () => Navigator.push(context,
+              MaterialPageRoute(builder: (context) => const WebViewPage())),
+          backgroundColor: Colors.yellow,
+          text: 'Ranking',
+        ),
         userProvider.hasEmergencyRole()
             ? _buildActionButton(
                 onPressed: () => onVehiclePressed(vehicleProvider),

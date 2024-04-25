@@ -2,6 +2,7 @@ import 'package:am_app/model/provider/user_provider.dart';
 import 'package:am_app/screen/login/login_page.dart';
 import 'package:am_app/screen/login/user_info_page.dart';
 import 'package:am_app/screen/map/map_page.dart';
+import 'package:am_app/screen/webview/webview.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -20,9 +21,15 @@ class _TabPageState extends State<TabPage> with SingleTickerProviderStateMixin {
       child: Text('Map', style: TextStyle(fontSize: 15)),
     ),
     const Tab(
-        icon: Icon(Icons.person, size: 23),
-        iconMargin: EdgeInsets.zero,
-        child: Text('Account', style: TextStyle(fontSize: 15))),
+      icon: Icon(Icons.person, size: 23),
+      iconMargin: EdgeInsets.zero,
+      child: Text('Account', style: TextStyle(fontSize: 15)),
+    ),
+    const Tab(
+      icon: Icon(Icons.grade, size: 23),
+      iconMargin: EdgeInsets.zero,
+      child: Text('Ranking', style: TextStyle(fontSize: 15)),
+    ),
   ];
 
   late TabController _tabController;
@@ -53,6 +60,7 @@ class _TabPageState extends State<TabPage> with SingleTickerProviderStateMixin {
           userProvider.username != null
               ? const UserInfoPage()
               : const LoginPage(),
+          const WebViewPage(),
         ],
       ),
       floatingActionButton: FloatingActionButton(
