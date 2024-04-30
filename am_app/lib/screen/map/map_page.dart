@@ -81,6 +81,7 @@ class _MapPageState extends State<MapPage> with WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     initListeners();
     tts.setLanguage('en-US');
     tts.setSpeechRate(0.4);
@@ -103,8 +104,37 @@ class _MapPageState extends State<MapPage> with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.detached) {
+    super.didChangeAppLifecycleState(state);
+    if (state == AppLifecycleState.paused) {
       socketService.close();
+      VehicleProvider vehicleProvider =
+          Provider.of<VehicleProvider>(context, listen: false);
+      vehicleProvider.deleteState();
+      _polylines.clear();
+      _markers.clear();
+    } else if (state == AppLifecycleState.resumed) {
+      initListeners();
+    } else if (state == AppLifecycleState.detached) {
+      socketService.close();
+      VehicleProvider vehicleProvider =
+          Provider.of<VehicleProvider>(context, listen: false);
+      vehicleProvider.deleteState();
+      _polylines.clear();
+      _markers.clear();
+    } else if (state == AppLifecycleState.inactive) {
+      socketService.close();
+      VehicleProvider vehicleProvider =
+          Provider.of<VehicleProvider>(context, listen: false);
+      vehicleProvider.deleteState();
+      _polylines.clear();
+      _markers.clear();
+    } else {
+      socketService.close();
+      VehicleProvider vehicleProvider =
+          Provider.of<VehicleProvider>(context, listen: false);
+      vehicleProvider.deleteState();
+      _polylines.clear();
+      _markers.clear();
     }
   }
 

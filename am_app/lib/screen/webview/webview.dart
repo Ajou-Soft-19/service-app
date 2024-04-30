@@ -68,7 +68,7 @@ class _WebViewPageState extends State<WebViewPage> {
           );
         },
       )
-      ..loadRequest(Uri.parse('https://service-j6ypbsgtf-epas.vercel.app/'));
+      ..loadRequest(Uri.parse('https://ajou-epas.xyz'));
 
     if (controller.platform is AndroidWebViewController) {
       AndroidWebViewController.enableDebugging(true);
