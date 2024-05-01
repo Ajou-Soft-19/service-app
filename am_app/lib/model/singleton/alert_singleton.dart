@@ -144,7 +144,7 @@ class AlertSingleton {
         return getBitmapDescriptorFromAssetBytes('assets/star.png', 110);
       case 'FIRE_TRUCK_MEDIUM':
       case 'FIRE_TRUCK_LARGE':
-        return getBitmapDescriptorFromAssetBytes('assets/fire-truck.png', 110);
+        return getBitmapDescriptorFromAssetBytes('assets/fire_truck.png', 110);
       default:
         return getBitmapDescriptorFromAssetBytes('assets/star.png', 110);
     }
